@@ -7,7 +7,9 @@ const crypto = require("crypto");
 
 const PORT = Number(process.env.PORT) || 3000;
 const DATA_FILE = path.join(__dirname, "data.json");
-const INDEX = path.join(__dirname, "public", "index.html");
+// index.html can sit in a "public" folder or next to server.js
+const INDEX = [path.join(__dirname, "public", "index.html"), path.join(__dirname, "index.html")]
+  .find((f) => fs.existsSync(f)) || path.join(__dirname, "index.html");
 // If the host's page has been closed this long, the Host seat in that group frees up.
 const HOST_TIMEOUT_MS = (Number(process.env.HOST_TIMEOUT_MIN) || 10) * 60 * 1000;
 // A group nobody has used for this long is deleted.
