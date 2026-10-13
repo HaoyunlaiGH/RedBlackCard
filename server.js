@@ -154,9 +154,13 @@ const server = http.createServer(async (req, res) => {
       const { cid, v, round } = body;
       if (!validCid(cid) || (v !== 0 && v !== 1)) return send(res, 400, { error: "Bad request" });
       if (round !== room.round) return send(res, 409, { error: "round_changed", round: room.round });
-      if (cid in room.votes) return send(res, 200, { vote: room.votes[cid] });
-      room.votes[cid] = v;
-      save(); broadcast(g);
+      // A person can change their choice any time; only their latest choice counts.
+      const isNew = !(cid in room.votes);
+      if (room.votes[cid] !== v) {
+        room.votes[cid] = v;
+        save();
+        if (isNew) broadcast(g);
+      }
       return send(res, 200, { vote: v });
     }
     case "/api/cpt": {
