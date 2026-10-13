@@ -1,0 +1,8 @@
+{
+  "name": "please-choose",
+  "version": "1.0.0",
+  "description": "Share a link, everyone picks 0 or 1, the host sums the answers.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

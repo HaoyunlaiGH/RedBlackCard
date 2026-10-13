@@ -1,2 +1,31 @@
-# RedBlackCard
-A polling web for friends
+# Please Choose
+
+无需登录的 0/1 选择网站，支持多个独立小组（Group Number）。零依赖，只需要 Node.js 18 或更高版本。
+
+## 本地运行
+    node server.js
+打开 http://localhost:3000 。同一局域网内的人可以用 http://你的电脑IP:3000 访问。
+
+## 上线（让任何人都能通过链接访问）
+以 Render 为例（免费）：
+1. 把这个文件夹上传到一个 GitHub 仓库。
+2. 在 render.com 新建 Web Service，选择该仓库。
+3. Build Command 留空，Start Command 填 `node server.js`。
+4. 部署完成后得到的网址就是网站地址。
+
+Railway、Fly.io 或任何能运行 Node 的服务器同样可用。
+
+## 小组
+- 小组号码只能是数字，最多 12 位。某个号码第一次被输入时自动创建新小组。
+- 每个小组有自己的 Host、投票和统计，互不影响。
+- 小组在没有任何人打开页面、也没有任何操作满 1 小时后会被自动删除。
+- Host 复制的链接带有小组号码（例如 `?g=2048`），打开后会自动填好号码。
+
+## 可选设置（环境变量）
+- `PORT`：端口，默认 3000
+- `HOST_TIMEOUT_MIN`：Host 关闭页面多少分钟后自动让出 Host 位置，默认 10
+- `ROOM_IDLE_MIN`：小组闲置多少分钟后删除，默认 60
+
+## 说明
+- 数据保存在 `data.json`。部分免费主机重启后会清空该文件。
+- 每个浏览器在每个小组每轮只能选一次（用浏览器本地存储识别，无需登录）。

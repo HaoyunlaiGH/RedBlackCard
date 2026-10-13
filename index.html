@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Please Choose</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #EEF1F6; --surface: #FFFFFF; --ink: #18213D; --muted: #5B6683;
+  --line: #C9D0DE; --accent: #2340D8; --on-accent: #FFFFFF; --danger: #B3261E;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121830; --surface: #1A2140; --ink: #E6EAF5; --muted: #9AA4C2;
+    --line: #2D3656; --accent: #8FA2FF; --on-accent: #121830; --danger: #FF8A80;
+    color-scheme: dark;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+main {
+  min-height: 100%; display: flex; flex-direction: column; align-items: center;
+  padding: clamp(2.5rem, 9vh, 6rem) 1.25rem 3rem; gap: 2.25rem;
+}
+[hidden] { display: none !important; }
+h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.2rem, 7vw, 3.6rem); line-height: 1.05; text-align: center; }
+
+/* role picker */
+.roles { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+.role {
+  width: 11rem; padding: 1.4rem 1rem; border-radius: 18px; cursor: pointer; text-align: left;
+  background: var(--surface); border: 2px solid var(--line); color: var(--ink); font: inherit;
+}
+.role:hover { border-color: var(--accent); }
+.role:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.role strong { display: block; font-size: 1.5rem; font-weight: 800; margin-bottom: .35rem; }
+.role span { color: var(--muted); font-size: .92rem; line-height: 1.4; }
+#pickMsg { min-height: 1.5em; margin: -0.75rem 0 0; font-weight: 600; font-size: 1.15rem; color: var(--danger); text-align: center; }
+
+/* choices */
+.choices { display: flex; gap: clamp(1.25rem, 7vw, 4rem); justify-content: center; }
+.opt {
+  --size: clamp(118px, 34vw, 200px);
+  width: var(--size); height: var(--size); border-radius: 50%;
+  border: 3px solid var(--ink); background: transparent; color: var(--ink);
+  font: 600 calc(var(--size) * 0.5)/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums; cursor: pointer;
+  display: grid; place-items: center; padding: 0 0 .06em;
+  transition: opacity .25s ease, background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+.opt:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
+.opt:disabled { cursor: default; }
+.opt.chosen { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: scale(1.04); }
+.opt.dim { opacity: .22; }
+.choices.waiting .opt { opacity: .45; }
+#status { margin: -0.75rem 0 0; min-height: 1.5em; color: var(--muted); font-size: 1.05rem; text-align: center; max-width: 36ch; }
+
+/* host panel */
+#host { width: 100%; max-width: 520px; margin-top: 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.25rem 1.4rem; }
+.host-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 1rem; }
+.host-head h2 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+#count { color: var(--muted); font-variant-numeric: tabular-nums; }
+.share { display: flex; gap: .6rem; margin-bottom: 1rem; }
+#link { flex: 1; min-width: 0; font: inherit; font-size: .9rem; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .55rem .7rem; }
+.btn { font: 600 1rem/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; border-radius: 10px; padding: .75rem 1.1rem; cursor: pointer; border: 2px solid var(--ink); background: transparent; color: var(--ink); }
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.small { padding: .55rem .8rem; font-size: .9rem; border-width: 1.5px; }
+.btn.warn { border-color: var(--danger); color: var(--danger); }
+.btn.warn.armed { background: var(--danger); color: var(--surface); }
+.btn.link { border: none; padding: .4rem 0; color: var(--muted); font-weight: 400; font-size: .9rem; text-decoration: underline; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+#result { margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 1rem; }
+#sum { font-size: 3.4rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
+#detail { color: var(--muted); line-height: 1.45; font-size: .95rem; }
+.foot { margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+#hostMsg { color: var(--danger); font-size: .9rem; }
+@media (prefers-reduced-motion: reduce) { .opt { transition: none; } .opt.chosen { transform: none; } }
+
+/* group step */
+.stack { display: flex; flex-direction: column; align-items: center; gap: 2.25rem; width: 100%; }
+.group-form { display: flex; gap: .75rem; width: 100%; max-width: 420px; }
+#groupInput {
+  flex: 1; min-width: 0; font: 600 1.6rem/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums; letter-spacing: .04em; text-align: center;
+  padding: .8rem 1rem; border-radius: 14px; border: 2px solid var(--line);
+  background: var(--surface); color: var(--ink);
+}
+#groupInput:focus-visible { outline: none; border-color: var(--accent); }
+.hint { margin: -1.25rem 0 0; color: var(--muted); font-size: .95rem; text-align: center; max-width: 34ch; line-height: 1.45; }
+.err { min-height: 1.5em; margin: -0.75rem 0 0; font-weight: 600; font-size: 1.15rem; color: var(--danger); text-align: center; }
+.group-tag { margin: 0 0 -1.25rem; color: var(--muted); font-size: 1rem; font-variant-numeric: tabular-nums; display: flex; gap: .75rem; align-items: baseline; }
+.group-tag b { color: var(--ink); font-weight: 800; }
+</style>
+</head>
+<body>
+<main>
+  <!-- Step 1: group number -->
+  <section id="groupStep" class="stack">
+    <h1>Enter Group Number</h1>
+    <p class="hint">Use the same number as the people you're with. A new number starts a new group.</p>
+    <form class="group-form" id="groupForm" novalidate>
+      <input id="groupInput" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" aria-label="Group number" placeholder="e.g. 2048">
+      <button class="btn primary" type="submit">Enter</button>
+    </form>
+    <p class="err" id="groupMsg" role="alert"></p>
+  </section>
+
+  <!-- Step 2: choose a role -->
+  <section id="pick" class="stack" hidden>
+    <p class="group-tag">Group <b id="pickGroup"></b> <button class="btn link" id="changeGroup">Change</button></p>
+    <h1>Join as</h1>
+    <div class="roles">
+      <button class="role" id="asHost"><strong>Host</strong><span>Share the link, see the total, start new rounds</span></button>
+      <button class="role" id="asGuest"><strong>Guest</strong><span>Pick 0 or 1</span></button>
+    </div>
+    <p class="err" id="pickMsg" role="alert"></p>
+  </section>
+
+  <!-- Step 3: choose 0 or 1 -->
+  <section id="vote" class="stack" hidden>
+    <p class="group-tag">Group <b id="voteGroup"></b></p>
+    <h1>Please Choose</h1>
+    <div class="choices waiting" id="choices">
+      <button class="opt" data-v="0" aria-pressed="false" disabled>0</button>
+      <button class="opt" data-v="1" aria-pressed="false" disabled>1</button>
+    </div>
+    <p id="status" aria-live="polite">Connecting…</p>
+
+    <section id="host" hidden aria-label="Host controls">
+      <div class="host-head"><h2>Host</h2><span id="count">0 responses</span></div>
+      <div class="share">
+        <input id="link" readonly aria-label="Share link">
+        <button class="btn small" id="copy">Copy link</button>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="cpt">CPT</button>
+        <button class="btn warn" id="reset">Start Again</button>
+      </div>
+      <div id="result" hidden aria-live="polite"><span id="sum">0</span><span id="detail"></span></div>
+      <div class="foot"><span id="hostMsg"></span><button class="btn link" id="exitHost">Exit Host</button></div>
+    </section>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (_) {} },
+};
+function newId() {
+  return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+}
+let cid = store.get("pc_cid");
+if (!cid || !/^[A-Za-z0-9-]{8,64}$/.test(cid)) { cid = newId(); store.set("pc_cid", cid); }
+
+let group = null, hostToken = null, round = null, myVote = null, sending = false, es = null, note = "";
+const validGroup = (g) => /^[0-9]{1,12}$/.test(g);
+
+function show(id) {
+  ["groupStep", "pick", "vote"].forEach((s) => ($(s).hidden = s !== id));
+}
+
+async function api(path, body) {
+  const r = await fetch(path, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ g: group, ...(body || {}) }),
+  });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok, status: r.status, data };
+}
+
+// ---------- step 1: group number ----------
+$("groupInput").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 12);
+  $("groupMsg").textContent = "";
+});
+$("groupForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const g = $("groupInput").value.trim();
+  if (!validGroup(g)) { $("groupMsg").textContent = "Enter a group number using digits only."; return; }
+  goToRoles(g);
+});
+function goToRoles(g) {
+  group = g;
+  $("pickGroup").textContent = g;
+  $("pickMsg").textContent = "";
+  const u = new URL(location.href); u.searchParams.set("g", g); history.replaceState(null, "", u);
+  show("pick");
+}
+$("changeGroup").addEventListener("click", () => {
+  const u = new URL(location.href); u.searchParams.delete("g"); history.replaceState(null, "", u);
+  $("groupInput").value = group || "";
+  show("groupStep"); $("groupInput").focus();
+});
+
+// ---------- step 2: role ----------
+$("asGuest").addEventListener("click", () => enter(false));
+$("asHost").addEventListener("click", async () => {
+  $("pickMsg").textContent = "";
+  try {
+    const { ok, data } = await api("/api/host/claim", { token: store.get("pc_host_" + group) });
+    if (!ok) { $("pickMsg").textContent = data.error || "Host has exited!"; return; }
+    hostToken = data.token; store.set("pc_host_" + group, hostToken);
+    enter(true);
+  } catch (_) {
+    $("pickMsg").textContent = "Can't reach the server. Check your connection.";
+  }
+});
+
+// ---------- step 3: voting ----------
+const opts = [...document.querySelectorAll(".opt")];
+const choicesEl = $("choices"), statusEl = $("status");
+
+function render() {
+  const ready = round !== null;
+  choicesEl.classList.toggle("waiting", !ready);
+  opts.forEach((b) => {
+    const v = Number(b.dataset.v);
+    b.classList.toggle("chosen", myVote === v);
+    b.classList.toggle("dim", myVote !== null && myVote !== v);
+    b.setAttribute("aria-pressed", String(myVote === v));
+    b.disabled = !ready || myVote !== null || sending;
+  });
+  if (ready) statusEl.textContent = myVote === null ? note : "Your choice is recorded.";
+}
+
+async function choose(v) {
+  if (myVote !== null || sending || round === null) return;
+  sending = true; note = ""; myVote = v; render();
+  try {
+    const { ok, status, data } = await api("/api/vote", { cid, v, round });
+    if (ok) myVote = data.vote;
+    else if (status === 409) { round = data.round; myVote = null; note = "A new round just started. Choose again."; }
+    else { myVote = null; note = "Your choice didn't save. Try again."; }
+  } catch (_) {
+    myVote = null; note = "Can't reach the server. Try again.";
+  }
+  sending = false; render();
+}
+opts.forEach((b) => b.addEventListener("click", () => choose(Number(b.dataset.v))));
+
+async function enter(asHost) {
+  show("vote");
+  $("voteGroup").textContent = group;
+  $("host").hidden = !asHost;
+  if (asHost) $("link").value = location.origin + location.pathname + "?g=" + group;
+
+  try {
+    const r = await fetch(`/api/me?g=${group}&cid=${encodeURIComponent(cid)}`, { cache: "no-store" });
+    const d = await r.json();
+    round = d.round; myVote = d.vote; render();
+    if (asHost) setCount(d.count);
+  } catch (_) { statusEl.textContent = "Can't reach the server. Reload the page."; }
+
+  es = new EventSource(`/events?g=${group}` + (asHost ? "&host=" + encodeURIComponent(hostToken) : ""));
+  es.onmessage = (e) => {
+    const s = JSON.parse(e.data);
+    if (round !== null && s.round !== round) { myVote = null; note = ""; if (asHost) $("result").hidden = true; }
+    round = s.round;
+    if (asHost) setCount(s.count);
+    render();
+  };
+}
+
+// ---------- host ----------
+function setCount(n) { $("count").textContent = n === 1 ? "1 response" : n + " responses"; }
+function notHost() { $("hostMsg").textContent = "You are no longer the host."; }
+
+$("cpt").addEventListener("click", async () => {
+  const btn = $("cpt"); btn.disabled = true;
+  try {
+    const { ok, data } = await api("/api/cpt", { token: hostToken });
+    if (!ok) return notHost();
+    const t = new Date(data.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    $("sum").textContent = String(data.sum);
+    $("detail").textContent = `Sum at ${t}. ${data.total} responses: ${data.zeros} chose 0, ${data.ones} chose 1.`;
+    $("result").hidden = false;
+  } catch (_) { $("hostMsg").textContent = "Can't reach the server."; }
+  finally { btn.disabled = false; }
+});
+
+let armTimer = null;
+$("reset").addEventListener("click", async () => {
+  const btn = $("reset");
+  if (!btn.classList.contains("armed")) {
+    btn.classList.add("armed"); btn.textContent = "Click to clear all";
+    armTimer = setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Start Again"; }, 3500);
+    return;
+  }
+  clearTimeout(armTimer); btn.classList.remove("armed");
+  btn.textContent = "Clearing…"; btn.disabled = true;
+  try {
+    const { ok } = await api("/api/reset", { token: hostToken });
+    if (!ok) notHost(); else $("result").hidden = true;
+  } catch (_) { $("hostMsg").textContent = "Can't reach the server."; }
+  btn.textContent = "Start Again"; btn.disabled = false;
+});
+
+$("copy").addEventListener("click", async () => {
+  const btn = $("copy");
+  try { await navigator.clipboard.writeText($("link").value); btn.textContent = "Copied"; }
+  catch (_) { $("link").select(); btn.textContent = "Press Ctrl+C"; }
+  setTimeout(() => (btn.textContent = "Copy link"), 1800);
+});
+
+$("exitHost").addEventListener("click", async () => {
+  try { await api("/api/host/release", { token: hostToken }); } catch (_) {}
+  store.del("pc_host_" + group);
+  location.reload();
+});
+
+// A shared link (?g=123) fills in the group number and goes straight to the role choice.
+const linked = new URLSearchParams(location.search).get("g");
+if (linked && validGroup(linked)) goToRoles(linked);
+else $("groupInput").focus();
+</script>
+</body>
+</html>
