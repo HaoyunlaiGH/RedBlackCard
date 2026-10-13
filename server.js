@@ -136,7 +136,7 @@ const server = http.createServer(async (req, res) => {
   switch (p) {
     case "/api/host/claim": {
       if (hostActive(g, room) && !isHost(room, body.token)) {
-        return send(res, 409, { error: "Host has exited!" });
+        return send(res, 409, { error: "Host has existed!" });
       }
       if (!isHost(room, body.token)) room.hostToken = crypto.randomUUID();
       room.hostSeen = Date.now();
