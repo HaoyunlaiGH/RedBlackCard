@@ -63,6 +63,7 @@ h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.2r
 .opt:disabled { cursor: default; }
 .opt.chosen { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: scale(1.04); }
 .opt.dim { opacity: .22; }
+.opt.dim:hover { opacity: .5; }
 .choices.waiting .opt { opacity: .45; }
 #status { margin: -0.75rem 0 0; min-height: 1.5em; color: var(--muted); font-size: 1.05rem; text-align: center; max-width: 36ch; }
 
@@ -214,7 +215,7 @@ $("asHost").addEventListener("click", async () => {
   $("pickMsg").textContent = "";
   try {
     const { ok, data } = await api("/api/host/claim", { token: store.get("pc_host_" + group) });
-    if (!ok) { $("pickMsg").textContent = data.error || "Host has exited!"; return; }
+    if (!ok) { $("pickMsg").textContent = data.error || "Host has existed!"; return; }
     hostToken = data.token; store.set("pc_host_" + group, hostToken);
     enter(true);
   } catch (_) {
@@ -234,21 +235,22 @@ function render() {
     b.classList.toggle("chosen", myVote === v);
     b.classList.toggle("dim", myVote !== null && myVote !== v);
     b.setAttribute("aria-pressed", String(myVote === v));
-    b.disabled = !ready || myVote !== null || sending;
+    b.disabled = !ready || sending || myVote === v;
   });
-  if (ready) statusEl.textContent = myVote === null ? note : "Your choice is recorded.";
+  if (ready) statusEl.textContent = note || (myVote === null ? "" : "Your choice is recorded. Tap the other number to change it.");
 }
 
 async function choose(v) {
-  if (myVote !== null || sending || round === null) return;
+  if (v === myVote || sending || round === null) return;
+  const prev = myVote;
   sending = true; note = ""; myVote = v; render();
   try {
     const { ok, status, data } = await api("/api/vote", { cid, v, round });
     if (ok) myVote = data.vote;
     else if (status === 409) { round = data.round; myVote = null; note = "A new round just started. Choose again."; }
-    else { myVote = null; note = "Your choice didn't save. Try again."; }
+    else { myVote = prev; note = "Your change didn't save. Try again."; }
   } catch (_) {
-    myVote = null; note = "Can't reach the server. Try again.";
+    myVote = prev; note = "Can't reach the server. Try again.";
   }
   sending = false; render();
 }
