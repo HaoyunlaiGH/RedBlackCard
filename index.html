@@ -11,41 +11,72 @@
 :root {
   --bg: #EEF1F6; --surface: #FFFFFF; --ink: #18213D; --muted: #5B6683;
   --line: #C9D0DE; --accent: #2340D8; --on-accent: #FFFFFF; --danger: #B3261E;
+  --life: #D6336C; --scrim: rgba(12, 16, 32, .62);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #121830; --surface: #1A2140; --ink: #E6EAF5; --muted: #9AA4C2;
     --line: #2D3656; --accent: #8FA2FF; --on-accent: #121830; --danger: #FF8A80;
+    --life: #FF7AA8; --scrim: rgba(4, 6, 14, .72);
     color-scheme: dark;
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
-html, body { height: 100%; }
+html, body { min-height: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
-  font-family: "Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Bricolage Grotesque", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-main {
-  min-height: 100%; display: flex; flex-direction: column; align-items: center;
-  padding: clamp(2.5rem, 9vh, 6rem) 1.25rem 3rem; gap: 2.25rem;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 [hidden] { display: none !important; }
-h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.2rem, 7vw, 3.6rem); line-height: 1.05; text-align: center; }
+
+/* top bar: group on the left, my name on the right */
+#topbar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: calc(env(safe-area-inset-top, 0px) + .75rem) 1.25rem .75rem;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.grp { color: var(--muted); font-variant-numeric: tabular-nums; }
+.grp b { color: var(--ink); font-weight: 800; margin-left: .3rem; }
+.me { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.me b { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pill { font-size: .85rem; font-weight: 600; padding: .2rem .55rem; border-radius: 999px; background: color-mix(in srgb, var(--life) 14%, transparent); color: var(--life); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pill.zero { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
+.tag { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: .2rem .45rem; border-radius: 6px; background: var(--accent); color: var(--on-accent); }
+
+main {
+  display: flex; flex-direction: column; align-items: center;
+  padding: clamp(2.5rem, 9vh, 5rem) 1.25rem 3rem;
+}
+.stack { display: flex; flex-direction: column; align-items: center; gap: 2.25rem; width: 100%; }
+h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.1rem, 7vw, 3.6rem); line-height: 1.05; text-align: center; }
+.hint { margin: -1.25rem 0 0; color: var(--muted); font-size: .95rem; text-align: center; max-width: 34ch; line-height: 1.45; }
+.err { min-height: 1.5em; margin: -0.75rem 0 0; font-weight: 600; font-size: 1.05rem; color: var(--danger); text-align: center; max-width: 34ch; }
+.group-tag { margin: 0 0 -1.25rem; color: var(--muted); font-size: 1rem; font-variant-numeric: tabular-nums; display: flex; gap: .6rem; align-items: baseline; }
+.group-tag b { color: var(--ink); font-weight: 800; }
+
+.form-row { display: flex; gap: .75rem; width: 100%; max-width: 420px; }
+.big-input {
+  flex: 1; min-width: 0; font: 600 1.5rem/1.1 "Bricolage Grotesque", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums; text-align: center;
+  padding: .8rem 1rem; border-radius: 14px; border: 2px solid var(--line);
+  background: var(--surface); color: var(--ink);
+}
+.big-input:focus-visible { outline: none; border-color: var(--accent); }
+.big-input.invalid { border-color: var(--danger); }
 
 /* role picker */
 .roles { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-.role {
-  width: 11rem; padding: 1.4rem 1rem; border-radius: 18px; cursor: pointer; text-align: left;
-  background: var(--surface); border: 2px solid var(--line); color: var(--ink); font: inherit;
-}
+.role { width: 11rem; padding: 1.4rem 1rem; border-radius: 18px; cursor: pointer; text-align: left; background: var(--surface); border: 2px solid var(--line); color: var(--ink); font: inherit; }
 .role:hover { border-color: var(--accent); }
 .role:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .role strong { display: block; font-size: 1.5rem; font-weight: 800; margin-bottom: .35rem; }
 .role span { color: var(--muted); font-size: .92rem; line-height: 1.4; }
-#pickMsg { min-height: 1.5em; margin: -0.75rem 0 0; font-weight: 600; font-size: 1.15rem; color: var(--danger); text-align: center; }
 
 /* choices */
 .choices { display: flex; gap: clamp(1.25rem, 7vw, 4rem); justify-content: center; }
@@ -54,8 +85,7 @@ h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.2r
   width: var(--size); height: var(--size); border-radius: 50%;
   border: 3px solid var(--ink); background: transparent; color: var(--ink);
   font: 600 calc(var(--size) * 0.5)/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  font-variant-numeric: tabular-nums; cursor: pointer;
-  display: grid; place-items: center; padding: 0 0 .06em;
+  font-variant-numeric: tabular-nums; cursor: pointer; display: grid; place-items: center; padding: 0 0 .06em;
   transition: opacity .25s ease, background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
 }
 .opt:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 10%, transparent); }
@@ -65,83 +95,134 @@ h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.2r
 .opt.dim { opacity: .22; }
 .opt.dim:hover { opacity: .5; }
 .choices.waiting .opt { opacity: .45; }
+.cover { width: min(100%, 30rem); height: clamp(118px, 34vw, 200px); border: 3px dashed var(--line); border-radius: 999px; display: grid; place-items: center; text-align: center; padding: 0 1.5rem; color: var(--muted); font-size: 1.15rem; font-weight: 600; }
 #status { margin: -0.75rem 0 0; min-height: 1.5em; color: var(--muted); font-size: 1.05rem; text-align: center; max-width: 36ch; }
 
-/* host panel */
-#host { width: 100%; max-width: 520px; margin-top: 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.25rem 1.4rem; }
-.host-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 1rem; }
-.host-head h2 { margin: 0; font-size: 1.15rem; font-weight: 800; }
-#count { color: var(--muted); font-variant-numeric: tabular-nums; }
-.share { display: flex; gap: .6rem; margin-bottom: 1rem; }
-#link { flex: 1; min-width: 0; font: inherit; font-size: .9rem; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .55rem .7rem; }
-.btn { font: 600 1rem/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; border-radius: 10px; padding: .75rem 1.1rem; cursor: pointer; border: 2px solid var(--ink); background: transparent; color: var(--ink); }
+/* buttons */
+.btn { font: 600 1rem/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; border-radius: 10px; padding: .75rem 1.1rem; cursor: pointer; border: 2px solid var(--ink); background: transparent; color: var(--ink); white-space: nowrap; }
 .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.btn:disabled { opacity: .5; cursor: default; }
+.btn:disabled { opacity: .4; cursor: default; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn.small { padding: .55rem .8rem; font-size: .9rem; border-width: 1.5px; }
+.btn.tiny { padding: .4rem .6rem; font-size: .82rem; border-width: 1.5px; border-radius: 8px; }
 .btn.warn { border-color: var(--danger); color: var(--danger); }
 .btn.warn.armed { background: var(--danger); color: var(--surface); }
 .btn.link { border: none; padding: .4rem 0; color: var(--muted); font-weight: 400; font-size: .9rem; text-decoration: underline; }
+.btn.toggle { min-width: 7.5rem; margin-top: -1rem; }
+
+/* host panel */
+.card { width: 100%; max-width: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.25rem 1.4rem; }
+#host { margin-top: 1rem; }
+.card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 1rem; }
+.card-head h2 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+.card-head span { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .95rem; }
+.share { display: flex; gap: .6rem; margin-bottom: 1rem; }
+#link { flex: 1; min-width: 0; font: inherit; font-size: .9rem; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: .55rem .7rem; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 #result { margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 1rem; }
 #sum { font-size: 3.4rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
 #detail { color: var(--muted); line-height: 1.45; font-size: .95rem; }
 .foot { margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 #hostMsg { color: var(--danger); font-size: .9rem; }
-@media (prefers-reduced-motion: reduce) { .opt { transition: none; } .opt.chosen { transform: none; } }
 
-/* group step */
-.stack { display: flex; flex-direction: column; align-items: center; gap: 2.25rem; width: 100%; }
-.group-form { display: flex; gap: .75rem; width: 100%; max-width: 420px; }
-#groupInput {
-  flex: 1; min-width: 0; font: 600 1.6rem/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  font-variant-numeric: tabular-nums; letter-spacing: .04em; text-align: center;
-  padding: .8rem 1rem; border-radius: 14px; border: 2px solid var(--line);
-  background: var(--surface); color: var(--ink);
-}
-#groupInput:focus-visible { outline: none; border-color: var(--accent); }
-.hint { margin: -1.25rem 0 0; color: var(--muted); font-size: .95rem; text-align: center; max-width: 34ch; line-height: 1.45; }
-.err { min-height: 1.5em; margin: -0.75rem 0 0; font-weight: 600; font-size: 1.15rem; color: var(--danger); text-align: center; }
-.group-tag { margin: 0 0 -1.25rem; color: var(--muted); font-size: 1rem; font-variant-numeric: tabular-nums; display: flex; gap: .75rem; align-items: baseline; }
-.group-tag b { color: var(--ink); font-weight: 800; }
+/* users / lives panel */
+#people { margin-top: .25rem; }
+.table-wrap { overflow-x: auto; margin: 0 -.25rem; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: .8rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 0 .25rem .5rem; border-bottom: 1px solid var(--line); }
+td { padding: .6rem .25rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+td.name { font-weight: 600; word-break: break-word; }
+td.name .you { color: var(--muted); font-weight: 400; margin-left: .25rem; }
+td.name .tag { margin-left: .4rem; vertical-align: 2px; }
+td.lives { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pips { display: inline-flex; gap: 3px; margin-right: .45rem; vertical-align: middle; }
+.pips i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--life); }
+.pips i.on { background: var(--life); }
+td.acts { text-align: right; white-space: nowrap; }
+td.acts .btn + .btn { margin-left: .35rem; }
+tr.self td.name { color: var(--accent); }
+tr.out td { opacity: .38; }
+tr.out td.acts { opacity: 1; }
+.empty { color: var(--muted); text-align: center; padding: 1rem 0 .25rem; }
+@media (max-width: 460px) { .pips { display: none; } }
+
+/* out of lives: guests (cannot be closed) */
+.overlay { position: fixed; inset: 0; z-index: 20; background: var(--scrim); display: grid; place-items: center; padding: 1.5rem; }
+.dialog { background: var(--surface); color: var(--ink); border-radius: 20px; padding: 2rem 1.75rem; max-width: 22rem; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.dialog h2 { margin: 0 0 .6rem; font-size: 1.6rem; font-weight: 800; color: var(--danger); }
+.dialog p { margin: 0; color: var(--muted); line-height: 1.45; }
+
+/* out of lives: host alerts (closable, page stays bright) */
+#hostAlert { position: fixed; z-index: 15; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 4.25rem); width: min(92vw, 24rem); background: var(--surface); border: 2px solid var(--danger); border-radius: 16px; padding: 1rem 1rem 1rem 1.25rem; box-shadow: 0 14px 40px rgba(0,0,0,.18); display: flex; gap: 1rem; align-items: flex-start; }
+#alertList { flex: 1; margin: 0; padding: 0; list-style: none; font-weight: 700; color: var(--danger); line-height: 1.5; max-height: 40vh; overflow-y: auto; }
+@media (prefers-reduced-motion: reduce) { .opt { transition: none; } .opt.chosen { transform: none; } }
 </style>
 </head>
 <body>
-<main>
+<header id="topbar" hidden>
+  <span class="grp">Group<b id="voteGroup"></b></span>
+  <span class="me"><span class="tag" id="meHost" hidden>Host</span><b id="meName"></b><span class="pill" id="meLives" hidden></span></span>
+</header>
+
+<main id="main">
   <!-- Step 1: group number -->
   <section id="groupStep" class="stack">
     <h1>Enter Group Number</h1>
     <p class="hint">Use the same number as the people you're with. A new number starts a new group.</p>
-    <form class="group-form" id="groupForm" novalidate>
-      <input id="groupInput" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" aria-label="Group number" placeholder="e.g. 2048">
+    <form class="form-row" id="groupForm" novalidate>
+      <input class="big-input" id="groupInput" inputmode="numeric" maxlength="12" autocomplete="off" aria-label="Group number" placeholder="e.g. 2048">
       <button class="btn primary" type="submit">Enter</button>
     </form>
     <p class="err" id="groupMsg" role="alert"></p>
   </section>
 
-  <!-- Step 2: choose a role -->
+  <!-- Step 2: name -->
+  <section id="nameStep" class="stack" hidden>
+    <p class="group-tag">Group <b id="nameGroup"></b> <button class="btn link" type="button" id="changeGroup">Change</button></p>
+    <h1>Please enter your name.</h1>
+    <form class="form-row" id="nameForm" novalidate>
+      <input class="big-input" id="nameInput" autocomplete="nickname" aria-label="Your name" aria-describedby="nameMsg">
+      <button class="btn primary" type="submit">Next</button>
+    </form>
+    <p class="err" id="nameMsg" role="alert"></p>
+  </section>
+
+  <!-- Step 3: role -->
   <section id="pick" class="stack" hidden>
-    <p class="group-tag">Group <b id="pickGroup"></b> <button class="btn link" id="changeGroup">Change</button></p>
+    <p class="group-tag">Group <b id="pickGroup"></b></p>
     <h1>Join as</h1>
     <div class="roles">
-      <button class="role" id="asHost"><strong>Host</strong><span>Share the link, see the total, start new rounds</span></button>
+      <button class="role" id="asHost"><strong>Host</strong><span>Set lives, see the total, start new rounds</span></button>
       <button class="role" id="asGuest"><strong>Guest</strong><span>Pick 0 or 1</span></button>
     </div>
     <p class="err" id="pickMsg" role="alert"></p>
   </section>
 
-  <!-- Step 3: choose 0 or 1 -->
+  <!-- Step 4 (host only): lives -->
+  <section id="livesStep" class="stack" hidden>
+    <h1>Set lives for participants</h1>
+    <p class="hint">Everyone, including you, starts with this many lives.</p>
+    <form class="form-row" id="livesForm" novalidate>
+      <input class="big-input" id="livesInput" inputmode="numeric" autocomplete="off" aria-label="Lives, 1 to 10" aria-describedby="livesMsg" placeholder="1–10">
+      <button class="btn primary" type="submit">Confirm</button>
+    </form>
+    <p class="err" id="livesMsg" role="alert"></p>
+  </section>
+
+  <!-- Step 5: choose 0 or 1 -->
   <section id="vote" class="stack" hidden>
-    <p class="group-tag">Group <b id="voteGroup"></b></p>
     <h1>Please Choose</h1>
     <div class="choices waiting" id="choices">
       <button class="opt" data-v="0" aria-pressed="false" disabled>0</button>
       <button class="opt" data-v="1" aria-pressed="false" disabled>1</button>
     </div>
+    <div class="cover" id="cover" hidden>Your choice is hidden</div>
     <p id="status" aria-live="polite">Connecting…</p>
+    <button class="btn small toggle" id="hideBtn" aria-pressed="false" hidden>Hide</button>
 
-    <section id="host" hidden aria-label="Host controls">
-      <div class="host-head"><h2>Host</h2><span id="count">0 responses</span></div>
+    <section id="host" class="card" hidden aria-label="Host controls">
+      <div class="card-head"><h2>Host</h2><span id="count">0 responses</span></div>
       <div class="share">
         <input id="link" readonly aria-label="Share link">
         <button class="btn small" id="copy">Copy link</button>
@@ -153,8 +234,31 @@ h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.2r
       <div id="result" hidden aria-live="polite"><span id="sum">0</span><span id="detail"></span></div>
       <div class="foot"><span id="hostMsg"></span><button class="btn link" id="exitHost">Exit Host</button></div>
     </section>
+
+    <section id="people" class="card" aria-label="Users and lives">
+      <div class="card-head"><h2>User / Lives</h2><span id="livesNote"></span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">User</th><th scope="col">Lives</th><th scope="col"><span class="sr" hidden>Actions</span></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="noUsers" hidden>No one has joined yet.</p>
+    </section>
   </section>
 </main>
+
+<div class="overlay" id="deadOverlay" role="alertdialog" aria-modal="true" aria-labelledby="deadTitle" aria-describedby="deadSub" hidden>
+  <div class="dialog">
+    <h2 id="deadTitle">You are out of lives!</h2>
+    <p id="deadSub">Wait for the host to restore you.</p>
+  </div>
+</div>
+
+<div id="hostAlert" role="alert" hidden>
+  <ul id="alertList"></ul>
+  <button class="btn tiny" id="alertClose">Close</button>
+</div>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -169,20 +273,29 @@ function newId() {
 let cid = store.get("pc_cid");
 if (!cid || !/^[A-Za-z0-9-]{8,64}$/.test(cid)) { cid = newId(); store.set("pc_cid", cid); }
 
-let group = null, hostToken = null, round = null, myVote = null, sending = false, es = null, note = "";
-const validGroup = (g) => /^[0-9]{1,12}$/.test(g);
+let group = null, me = null, isHostRole = false, hostToken = null;
+let round = null, myVote = null, sending = false, es = null, note = "", concealed = false;
+let roomLives = null, users = [], prevLives = new Map(), seeded = false, alerts = [];
+let armedPid = null, armTimerSelf = null;
 
+const validGroup = (g) => /^[0-9]{1,12}$/.test(g);
+const STEPS = ["groupStep", "nameStep", "pick", "livesStep", "vote"];
 function show(id) {
-  ["groupStep", "pick", "vote"].forEach((s) => ($(s).hidden = s !== id));
+  STEPS.forEach((s) => ($(s).hidden = s !== id));
+  $("topbar").hidden = id !== "vote";
 }
 
 async function api(path, body) {
   const r = await fetch(path, {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ g: group, ...(body || {}) }),
+    body: JSON.stringify({ g: group, cid, token: hostToken, ...(body || {}) }),
   });
   const data = await r.json().catch(() => ({}));
   return { ok: r.ok, status: r.status, data };
+}
+async function fetchMe() {
+  const r = await fetch(`/api/me?g=${group}&cid=${encodeURIComponent(cid)}`, { cache: "no-store" });
+  return r.json();
 }
 
 // ---------- step 1: group number ----------
@@ -194,14 +307,16 @@ $("groupForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const g = $("groupInput").value.trim();
   if (!validGroup(g)) { $("groupMsg").textContent = "Enter a group number using digits only."; return; }
-  goToRoles(g);
+  goToName(g);
 });
-function goToRoles(g) {
+function goToName(g) {
   group = g;
-  $("pickGroup").textContent = g;
-  $("pickMsg").textContent = "";
+  $("nameGroup").textContent = g; $("pickGroup").textContent = g; $("voteGroup").textContent = g;
   const u = new URL(location.href); u.searchParams.set("g", g); history.replaceState(null, "", u);
-  show("pick");
+  $("nameMsg").textContent = ""; $("nameInput").classList.remove("invalid");
+  $("nameInput").value = store.get("pc_name_" + g) || store.get("pc_name") || "";
+  show("nameStep");
+  $("nameInput").focus();
 }
 $("changeGroup").addEventListener("click", () => {
   const u = new URL(location.href); u.searchParams.delete("g"); history.replaceState(null, "", u);
@@ -209,74 +324,270 @@ $("changeGroup").addEventListener("click", () => {
   show("groupStep"); $("groupInput").focus();
 });
 
-// ---------- step 2: role ----------
-$("asGuest").addEventListener("click", () => enter(false));
+// ---------- step 2: name ----------
+const NAME_RE = /^[A-Za-z\u3400-\u4dbf\u4e00-\u9fff]+( [A-Za-z\u3400-\u4dbf\u4e00-\u9fff]+)*$/;
+function checkName(raw) {
+  const name = raw.trim().replace(/\s+/g, " ");
+  if (!name) return { error: "Name can't be empty." };
+  if (Array.from(name).length > 20) return { error: "Name must be 20 characters or fewer." };
+  if (!NAME_RE.test(name)) return { error: "Names can only use Chinese or English letters, with no symbols or punctuation." };
+  return { name };
+}
+$("nameInput").addEventListener("input", () => { $("nameMsg").textContent = ""; $("nameInput").classList.remove("invalid"); });
+$("nameForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fail = (msg) => { $("nameMsg").textContent = msg; $("nameInput").classList.add("invalid"); $("nameInput").focus(); };
+  const { name, error } = checkName($("nameInput").value);
+  if (error) return fail(error);
+  try {
+    const { ok, data } = await api("/api/join", { name });
+    if (!ok) return fail(data.error || "Couldn't save your name. Try again.");
+    me = data;
+    store.set("pc_name_" + group, data.name); store.set("pc_name", data.name);
+    $("pickMsg").textContent = "";
+    show("pick");
+  } catch (_) { fail("Can't reach the server. Check your connection."); }
+});
+
+// ---------- step 3: role ----------
+$("asGuest").addEventListener("click", () => { hostToken = null; enter(false); });
 $("asHost").addEventListener("click", async () => {
   $("pickMsg").textContent = "";
   try {
     const { ok, data } = await api("/api/host/claim", { token: store.get("pc_host_" + group) });
     if (!ok) { $("pickMsg").textContent = data.error || "Host has existed!"; return; }
     hostToken = data.token; store.set("pc_host_" + group, hostToken);
-    enter(true);
+    $("livesInput").value = data.lives ? String(data.lives) : "";
+    $("livesMsg").textContent = ""; $("livesInput").classList.remove("invalid");
+    show("livesStep"); $("livesInput").focus();
   } catch (_) {
     $("pickMsg").textContent = "Can't reach the server. Check your connection.";
   }
 });
 
-// ---------- step 3: voting ----------
+// ---------- step 4: lives (host) ----------
+$("livesInput").addEventListener("input", () => { $("livesMsg").textContent = ""; $("livesInput").classList.remove("invalid"); });
+$("livesForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fail = (msg) => { $("livesMsg").textContent = msg; $("livesInput").classList.add("invalid"); $("livesInput").focus(); };
+  const raw = $("livesInput").value.trim();
+  const n = Number(raw);
+  if (!/^[0-9]+$/.test(raw) || !Number.isInteger(n) || n < 1 || n > 10) return fail("Enter a whole number from 1 to 10.");
+  try {
+    const { ok, data } = await api("/api/lives/set", { lives: n });
+    if (!ok) return fail(data.error || "Couldn't save. Try again.");
+    enter(true);
+  } catch (_) { fail("Can't reach the server. Check your connection."); }
+});
+
+// ---------- step 5: voting ----------
 const opts = [...document.querySelectorAll(".opt")];
 const choicesEl = $("choices"), statusEl = $("status");
+const myLives = () => (me && typeof me.lives === "number" ? me.lives : null);
+const isOut = () => myLives() === 0;
 
-function render() {
+function renderChoices() {
   const ready = round !== null;
+  const locked = isOut() && !isHostRole;
   choicesEl.classList.toggle("waiting", !ready);
   opts.forEach((b) => {
     const v = Number(b.dataset.v);
     b.classList.toggle("chosen", myVote === v);
     b.classList.toggle("dim", myVote !== null && myVote !== v);
     b.setAttribute("aria-pressed", String(myVote === v));
-    b.disabled = !ready || sending || myVote === v;
+    b.disabled = !ready || sending || locked || myVote === v;
   });
-  if (ready) statusEl.textContent = note || (myVote === null ? "" : "Your choice is recorded. Tap the other number to change it.");
+  // Hide/Unhide is offered once a choice has been made; a new round shows the choices again.
+  if (ready && myVote === null && concealed) setConcealed(false);
+  choicesEl.hidden = concealed;
+  $("cover").hidden = !concealed;
+  const hb = $("hideBtn");
+  hb.hidden = !(ready && myVote !== null);
+  hb.textContent = concealed ? "Unhide" : "Hide";
+  hb.setAttribute("aria-pressed", String(concealed));
+  if (ready) {
+    statusEl.textContent = note || (myVote === null ? ""
+      : concealed ? "Your choice is recorded."
+      : "Your choice is recorded. Tap the other number to change it.");
+  }
 }
 
 async function choose(v) {
-  if (v === myVote || sending || round === null) return;
+  if (v === myVote || sending || round === null || (isOut() && !isHostRole)) return;
   const prev = myVote;
-  sending = true; note = ""; myVote = v; render();
+  sending = true; note = ""; myVote = v; renderChoices();
   try {
-    const { ok, status, data } = await api("/api/vote", { cid, v, round });
+    const { ok, status, data } = await api("/api/vote", { v, round });
     if (ok) myVote = data.vote;
     else if (status === 409) { round = data.round; myVote = null; note = "A new round just started. Choose again."; }
-    else { myVote = prev; note = "Your change didn't save. Try again."; }
+    else { myVote = prev; note = data.error || "Your change didn't save. Try again."; }
   } catch (_) {
     myVote = prev; note = "Can't reach the server. Try again.";
   }
-  sending = false; render();
+  sending = false; renderChoices();
 }
 opts.forEach((b) => b.addEventListener("click", () => choose(Number(b.dataset.v))));
 
+function setConcealed(on) {
+  concealed = on;
+  if (on) store.set("pc_hide_" + group, "1"); else store.del("pc_hide_" + group);
+}
+$("hideBtn").addEventListener("click", () => { setConcealed(!concealed); renderChoices(); $("hideBtn").focus(); });
+
+// ---------- me (top right) ----------
+function livesText(n) { return n === 1 ? "1 life" : n + " lives"; }
+function renderMe() {
+  if (!me) return;
+  $("meName").textContent = me.name;
+  $("meHost").hidden = !isHostRole;
+  const n = myLives(), pill = $("meLives");
+  pill.hidden = n === null;
+  if (n !== null) { pill.textContent = livesText(n); pill.classList.toggle("zero", n === 0); }
+}
+
+// ---------- users / lives panel ----------
+// Sort by first letter: English by letter, Chinese by the pinyin initial of the first character.
+const coll = new Intl.Collator("zh-Hans-u-co-pinyin", { sensitivity: "base" });
+const PY_LETTERS = "ABCDEFGHJKLMNOPQRSTWXYZ";
+const PY_BOUNDS = "吖八嚓咑妸发旮哈丌咔垃妈拏噢妑七呥仨他屲夕丫帀";
+function initialOf(name) {
+  const ch = Array.from(name)[0] || "";
+  if (/[A-Za-z]/.test(ch)) return ch.toUpperCase();
+  for (let i = PY_BOUNDS.length - 1; i >= 0; i--) if (coll.compare(ch, PY_BOUNDS[i]) >= 0) return PY_LETTERS[i];
+  return "#";
+}
+function byInitial(a, b) {
+  const ia = initialOf(a.name), ib = initialOf(b.name);
+  if (ia !== ib) return ia < ib ? -1 : 1;
+  return coll.compare(a.name, b.name);
+}
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function renderPanel() {
+  $("livesNote").textContent = roomLives ? `Start with ${livesText(roomLives)}` : "Waiting for the host to set lives";
+  const tbody = $("rows");
+  tbody.textContent = "";
+  $("noUsers").hidden = users.length > 0;
+  for (const u of [...users].sort(byInitial)) {
+    const self = me && u.pid === me.pid;
+    const tr = el("tr");
+    if (u.lives === 0) tr.classList.add("out");
+    if (self) tr.classList.add("self");
+
+    const tdName = el("td", "name", u.name);
+    if (self) tdName.append(el("span", "you", "(you)"));
+    if (u.host) tdName.append(el("span", "tag", "Host"));
+
+    const tdLives = el("td", "lives");
+    if (typeof u.lives === "number" && roomLives) {
+      const pips = el("span", "pips");
+      pips.setAttribute("aria-hidden", "true");
+      for (let i = 0; i < roomLives; i++) pips.append(el("i", i < u.lives ? "on" : ""));
+      tdLives.append(pips, document.createTextNode(String(u.lives)));
+    } else tdLives.textContent = "–";
+
+    const tdActs = el("td", "acts");
+    const hasLives = typeof u.lives === "number";
+    if (isHostRole || self) {
+      const d = el("button", "btn tiny warn", "Deduct");
+      d.dataset.act = "deduct"; d.dataset.pid = u.pid;
+      d.disabled = !hasLives || u.lives === 0;
+      // Guests confirm before taking a life from themselves, since only the host can restore it.
+      if (!isHostRole && armedPid === u.pid) { d.textContent = "Confirm?"; d.classList.add("armed"); }
+      d.setAttribute("aria-label", `Deduct a life from ${u.name}`);
+      tdActs.append(d);
+    }
+    if (isHostRole) {
+      const r = el("button", "btn tiny", "Restore");
+      r.dataset.act = "restore"; r.dataset.pid = u.pid;
+      r.disabled = !hasLives || !roomLives || u.lives === roomLives;
+      r.setAttribute("aria-label", `Restore ${u.name} to ${roomLives || ""} lives`);
+      tdActs.append(r);
+    }
+    tr.append(tdName, tdLives, tdActs);
+    tbody.append(tr);
+  }
+}
+$("rows").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn || btn.disabled) return;
+  const pid = btn.dataset.pid, act = btn.dataset.act;
+  if (act === "deduct" && !isHostRole && armedPid !== pid) {
+    armedPid = pid; renderPanel();
+    clearTimeout(armTimerSelf);
+    armTimerSelf = setTimeout(() => { armedPid = null; renderPanel(); }, 3000);
+    return;
+  }
+  armedPid = null; clearTimeout(armTimerSelf);
+  btn.disabled = true;
+  try {
+    const { ok, data } = await api(act === "deduct" ? "/api/lives/deduct" : "/api/lives/restore", { pid });
+    if (!ok && isHostRole) $("hostMsg").textContent = data.error || "That didn't work.";
+  } catch (_) { if (isHostRole) $("hostMsg").textContent = "Can't reach the server."; }
+  renderPanel();
+});
+
+// ---------- out of lives ----------
+function renderOut() {
+  const out = isOut() && !isHostRole;
+  $("deadOverlay").hidden = !out;
+  $("main").inert = out;
+  $("topbar").inert = out;
+}
+function detectOuts(next) {
+  for (const u of next) {
+    const prev = prevLives.get(u.pid);
+    if (seeded && prev > 0 && u.lives === 0) {
+      pushAlert(me && u.pid === me.pid ? "You are out of lives!" : `${u.name} is out of lives!`);
+    }
+  }
+  prevLives = new Map(next.map((u) => [u.pid, u.lives]));
+  seeded = true;
+}
+function pushAlert(text) {
+  alerts.push(text);
+  const list = $("alertList");
+  list.textContent = "";
+  for (const a of alerts) list.append(el("li", "", a));
+  list.scrollTop = list.scrollHeight;
+  $("hostAlert").hidden = false;
+}
+$("alertClose").addEventListener("click", () => { alerts = []; $("hostAlert").hidden = true; });
+
+// ---------- live state ----------
+function applyState(s) {
+  if (round !== null && s.round !== round) { myVote = null; note = ""; if (isHostRole) $("result").hidden = true; }
+  round = s.round;
+  roomLives = s.lives;
+  users = s.users || [];
+  if (isHostRole) { setCount(s.count); detectOuts(users); }
+  const mine = me && users.find((u) => u.pid === me.pid);
+  if (mine) me = { ...me, name: mine.name, lives: mine.lives };
+  renderAll();
+}
+function renderAll() { renderChoices(); renderMe(); renderPanel(); renderOut(); }
+
 async function enter(asHost) {
+  isHostRole = asHost;
   show("vote");
-  $("voteGroup").textContent = group;
   $("host").hidden = !asHost;
   if (asHost) $("link").value = location.origin + location.pathname + "?g=" + group;
+  concealed = store.get("pc_hide_" + group) === "1";
+  renderMe();
 
   try {
-    const r = await fetch(`/api/me?g=${group}&cid=${encodeURIComponent(cid)}`, { cache: "no-store" });
-    const d = await r.json();
-    round = d.round; myVote = d.vote; render();
-    if (asHost) setCount(d.count);
+    const d = await fetchMe();
+    if (d.me) me = d.me;
+    myVote = d.vote;
+    applyState(d);
   } catch (_) { statusEl.textContent = "Can't reach the server. Reload the page."; }
 
   es = new EventSource(`/events?g=${group}` + (asHost ? "&host=" + encodeURIComponent(hostToken) : ""));
-  es.onmessage = (e) => {
-    const s = JSON.parse(e.data);
-    if (round !== null && s.round !== round) { myVote = null; note = ""; if (asHost) $("result").hidden = true; }
-    round = s.round;
-    if (asHost) setCount(s.count);
-    render();
-  };
+  es.onmessage = (e) => applyState(JSON.parse(e.data));
 }
 
 // ---------- host ----------
@@ -286,7 +597,7 @@ function notHost() { $("hostMsg").textContent = "You are no longer the host."; }
 $("cpt").addEventListener("click", async () => {
   const btn = $("cpt"); btn.disabled = true;
   try {
-    const { ok, data } = await api("/api/cpt", { token: hostToken });
+    const { ok, data } = await api("/api/cpt");
     if (!ok) return notHost();
     const t = new Date(data.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     $("sum").textContent = String(data.sum);
@@ -307,7 +618,7 @@ $("reset").addEventListener("click", async () => {
   clearTimeout(armTimer); btn.classList.remove("armed");
   btn.textContent = "Clearing…"; btn.disabled = true;
   try {
-    const { ok } = await api("/api/reset", { token: hostToken });
+    const { ok } = await api("/api/reset");
     if (!ok) notHost(); else $("result").hidden = true;
   } catch (_) { $("hostMsg").textContent = "Can't reach the server."; }
   btn.textContent = "Start Again"; btn.disabled = false;
@@ -321,14 +632,14 @@ $("copy").addEventListener("click", async () => {
 });
 
 $("exitHost").addEventListener("click", async () => {
-  try { await api("/api/host/release", { token: hostToken }); } catch (_) {}
+  try { await api("/api/host/release"); } catch (_) {}
   store.del("pc_host_" + group);
   location.reload();
 });
 
-// A shared link (?g=123) fills in the group number and goes straight to the role choice.
+// A shared link (?g=123) fills in the group number and goes straight to the name step.
 const linked = new URLSearchParams(location.search).get("g");
-if (linked && validGroup(linked)) goToRoles(linked);
+if (linked && validGroup(linked)) goToName(linked);
 else $("groupInput").focus();
 </script>
 </body>
