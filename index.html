@@ -152,8 +152,8 @@ td.lives { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pips i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--life); }
 .pips i.on { background: var(--life); }
 td.acts { text-align: right; white-space: nowrap; }
-td.guess { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-td.guess.draft { color: var(--muted); font-weight: 400; }
+td.gcell { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.gcell.draft { color: var(--muted); font-weight: 400; }
 td.acts .btn + .btn { margin-left: .35rem; }
 tr.self td.name { color: var(--accent); }
 tr.out td { opacity: .38; }
@@ -745,7 +745,7 @@ function renderPanel() {
       tdLives.append(pips, document.createTextNode(String(u.lives)));
     } else tdLives.textContent = "–";
 
-    const tdGuess = el("td", "guess");
+    const tdGuess = el("td", "gcell");
     if (online && u.guess !== null && u.guess !== undefined) {
       tdGuess.textContent = String(u.guess);
       if (!u.guessConfirmed) { tdGuess.classList.add("draft"); tdGuess.title = "Not confirmed yet"; }
