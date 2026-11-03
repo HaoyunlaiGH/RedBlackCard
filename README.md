@@ -28,6 +28,13 @@ Railway、Fly.io 或任何能运行 Node 的服务器同样可用。
 - 用户可以给自己 Deduct（需要确认一次）；Host 可以给任何人 Deduct 或 Restore（恢复到初始命数）。
 - Guest 命数为 0 时页面变暗、无法操作，直到 Host 为其 Restore。
 
+## Online 模式
+- Host 设置命数后，再设置 Tolerance（0 到命数减 1 的整数）。
+- 每位玩家（包括 Host）在 Enter your guess 中输入猜测（0 到当前玩家总数的整数），可以 Confirm 锁定，也可以随时 Change。
+- Host 按 CPT 时：如果还有存活玩家没有有效猜测，会提示对应玩家，本次不判定；如果所有人都有有效猜测（未 Confirm 的以输入框内容为准），则猜测 < sum − tolerance 或 > sum + tolerance 的玩家各扣一条命。
+- 每一轮只判定扣命一次；再次按 CPT 只显示总和。Start Again 会清空选择和猜测。
+- 没有 Deduct 按钮；Host 可以 Restore，也可以 Delete（把玩家移出小组）。
+
 ## 可选设置（环境变量）
 - `PORT`：端口，默认 3000
 - `HOST_TIMEOUT_MIN`：Host 关闭页面多少分钟后自动让出 Host 位置，默认 10
