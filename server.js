@@ -314,13 +314,15 @@ const server = http.createServer(async (req, res) => {
       const result = { mode: room.mode, sum: ones, zeros, ones, total: zeros + ones, at: Date.now() };
       if (room.mode !== "online") return send(res, 200, result);
 
-      // Online: every player still in the game needs a guess (confirmed or just typed in).
+      // Online: every player still in the game needs a choice (0 or 1) and a guess
+      // (confirmed or just typed in). If anyone is missing either, nothing is judged.
       const alive = Object.entries(room.users).filter(([, u]) => typeof u.lives === "number" && u.lives > 0);
-      const missing = alive.filter(([c]) => !(room.guesses[c] && validGuess(room, room.guesses[c].value)));
-      if (missing.length) {
-        const pids = missing.map(([, u]) => u.pid);
-        notify(g, { type: "missing", pids });
-        return send(res, 200, { mode: "online", missing: missing.map(([, u]) => ({ pid: u.pid, name: u.name })) });
+      const noChoice = alive.filter(([c]) => !(c in room.votes));
+      const noGuess = alive.filter(([c]) => !(room.guesses[c] && validGuess(room, room.guesses[c].value)));
+      if (noChoice.length || noGuess.length) {
+        const brief = (list) => list.map(([, u]) => ({ pid: u.pid, name: u.name }));
+        notify(g, { type: "missing", choicePids: noChoice.map(([, u]) => u.pid), pids: noGuess.map(([, u]) => u.pid) });
+        return send(res, 200, { mode: "online", missingChoice: brief(noChoice), missing: brief(noGuess) });
       }
       const tol = room.tolerance || 0;
       const low = ones - tol, high = ones + tol;
