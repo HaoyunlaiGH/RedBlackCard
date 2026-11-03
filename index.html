@@ -849,7 +849,9 @@ function renderAll() { renderChoices(); renderGuess(); renderMe(); renderPanel()
 function onNotice(e) {
   const n = JSON.parse(e.data);
   // The host already sees the full list from CPT itself.
-  if (n.type === "missing" && !isHostRole && me && n.pids.includes(me.pid)) pushAlert("You haven't entered a guess!");
+  if (n.type !== "missing" || isHostRole || !me) return;
+  if ((n.choicePids || []).includes(me.pid)) pushAlert("You haven't made a choice!");
+  if ((n.pids || []).includes(me.pid)) pushAlert("You haven't entered a guess!");
 }
 
 async function enter(asHost) {
@@ -886,9 +888,11 @@ $("cpt").addEventListener("click", async () => {
   try {
     const { ok, data } = await api("/api/cpt");
     if (!ok) return notHost();
-    if (data.missing) {
+    if (data.missing || data.missingChoice) {
       $("result").hidden = true;
-      for (const m of data.missing) pushAlert(me && m.pid === me.pid ? "You haven't entered a guess!" : `${m.name} hasn't entered a guess!`);
+      const mine = (m) => me && m.pid === me.pid;
+      for (const m of data.missingChoice || []) pushAlert(mine(m) ? "You haven't made a choice!" : `${m.name} hasn't made a choice!`);
+      for (const m of data.missing || []) pushAlert(mine(m) ? "You haven't entered a guess!" : `${m.name} hasn't entered a guess!`);
       return;
     }
     const t = new Date(data.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
