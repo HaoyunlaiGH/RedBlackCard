@@ -87,7 +87,15 @@ function publicState(g, room) {
     lives: room.lives,
     mode: room.mode,
     tolerance: room.tolerance,
-    users: Object.values(room.users).map((u) => ({ pid: u.pid, name: u.name, lives: u.lives, host: u.pid === hostPid })),
+    users: Object.entries(room.users).map(([cid, u]) => {
+      const gs = room.mode === "online" ? room.guesses[cid] : null;
+      return {
+        pid: u.pid, name: u.name, lives: u.lives, host: u.pid === hostPid,
+        // this round's guess, shown in the panel (null when nothing valid is entered)
+        guess: gs && gs.value !== null ? gs.value : null,
+        guessConfirmed: !!(gs && gs.value !== null && gs.confirmed),
+      };
+    }),
   };
 }
 function broadcast(g) {
@@ -277,8 +285,10 @@ const server = http.createServer(async (req, res) => {
         return send(res, 400, { error: `Enter a whole number from 0 to ${playerCount(room)}.` });
       }
       if (confirmed === true && value === null) return send(res, 400, { error: "Enter your guess first." });
+      const before = room.guesses[cid];
       room.guesses[cid] = { value, confirmed: confirmed === true };
       save();
+      if (!before || before.value !== value || before.confirmed !== (confirmed === true)) broadcast(g);
       return send(res, 200, { guess: room.guesses[cid] });
     }
     case "/api/vote": {
