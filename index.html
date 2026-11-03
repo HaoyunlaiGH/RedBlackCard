@@ -89,17 +89,29 @@ h1 { margin: 0; font-weight: 800; letter-spacing: -0.02em; font-size: clamp(2.1r
   transition: opacity .25s ease, background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
 }
 .opt:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.opt:focus { outline: none; }
 .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
 .opt:disabled { cursor: default; }
 .opt.chosen { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: scale(1.04); }
 .opt.dim { opacity: .22; }
 .opt.dim:hover { opacity: .5; }
 .choices.waiting .opt { opacity: .45; }
-.cover { width: min(100%, 30rem); height: clamp(118px, 34vw, 200px); border: 3px dashed var(--line); border-radius: 999px; display: grid; place-items: center; text-align: center; padding: 0 1.5rem; color: var(--muted); font-size: 1.15rem; font-weight: 600; }
+/* Hide: the cover sits on top of the choices with a solid background and extra margin,
+   and the choices underneath become invisible, so no edge, ring or highlight can show through. */
+.choice-area { position: relative; display: flex; justify-content: center; width: 100%; padding: 12px 0; margin: -12px 0; }
+.choice-area.concealed .choices { visibility: hidden; }
+.choice-area.concealed .opt { transition: none; }
+.cover {
+  position: absolute; z-index: 2; inset: 0 max(-14px, calc(50% - 16rem));
+  background: var(--bg); border: 3px dashed var(--line); border-radius: 999px;
+  display: grid; place-items: center; text-align: center; padding: 0 1.5rem;
+  color: var(--muted); font-size: 1.15rem; font-weight: 600;
+}
 #status { margin: -0.75rem 0 0; min-height: 1.5em; color: var(--muted); font-size: 1.05rem; text-align: center; max-width: 36ch; }
 
 /* buttons */
 .btn { font: 600 1rem/1 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; border-radius: 10px; padding: .75rem 1.1rem; cursor: pointer; border: 2px solid var(--ink); background: transparent; color: var(--ink); white-space: nowrap; }
+.btn:focus { outline: none; }
 .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .btn:disabled { opacity: .4; cursor: default; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
@@ -157,12 +169,49 @@ tr.out td.acts { opacity: 1; }
 #hostAlert { position: fixed; z-index: 15; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 4.25rem); width: min(92vw, 24rem); background: var(--surface); border: 2px solid var(--danger); border-radius: 16px; padding: 1rem 1rem 1rem 1.25rem; box-shadow: 0 14px 40px rgba(0,0,0,.18); display: flex; gap: 1rem; align-items: flex-start; }
 #alertList { flex: 1; margin: 0; padding: 0; list-style: none; font-weight: 700; color: var(--danger); line-height: 1.5; max-height: 40vh; overflow-y: auto; }
 @media (prefers-reduced-motion: reduce) { .opt { transition: none; } .opt.chosen { transform: none; } }
+
+/* pencil next to my name */
+.icon-btn { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; border: none; background: transparent; color: var(--muted); cursor: pointer; padding: 0; flex: none; }
+.icon-btn:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.icon-btn:focus { outline: none; }
+.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.icon-btn svg { width: 17px; height: 17px; }
+
+/* mode cards reuse .role */
+.role.current { border-color: var(--accent); }
+
+/* guess field (Online) */
+.guess { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: stretch; gap: .5rem; margin-top: -.5rem; }
+.guess-field { display: flex; align-items: center; gap: .4rem; padding: .35rem .4rem .35rem .9rem; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); }
+.guess-field:focus-within { border-color: var(--accent); }
+.guess-field.invalid { border-color: var(--danger); }
+.guess-field input { flex: 1; min-width: 0; border: none; background: transparent; color: var(--ink); font: 600 1.25rem/1.2 "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: .45rem 0; }
+.guess-field input:focus { outline: none; }
+.guess-field input::placeholder { color: var(--muted); font-weight: 400; }
+.guess-field.locked { background: color-mix(in srgb, var(--muted) 14%, var(--bg)); border-color: var(--line); }
+.guess-field.locked input { color: var(--muted); }
+.guess .err { margin: 0; font-size: .92rem; min-height: 1.3em; text-align: left; max-width: none; }
+.guess .ok { color: var(--muted); }
+
+/* rename dialog */
+.dialog.form { text-align: left; }
+.dialog.form h2 { color: var(--ink); font-size: 1.35rem; }
+.dialog.form input { width: 100%; margin: .4rem 0 .5rem; font-size: 1.2rem; text-align: left; }
+.dialog.form .err { margin: 0 0 .9rem; text-align: left; font-size: .92rem; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: .6rem; }
 </style>
 </head>
 <body>
 <header id="topbar" hidden>
   <span class="grp">Group<b id="voteGroup"></b></span>
-  <span class="me"><span class="tag" id="meHost" hidden>Host</span><b id="meName"></b><span class="pill" id="meLives" hidden></span></span>
+  <span class="me">
+    <span class="tag" id="meHost" hidden>Host</span>
+    <b id="meName"></b>
+    <button class="icon-btn" id="renameBtn" aria-label="Change your name" title="Change your name">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </button>
+    <span class="pill" id="meLives" hidden></span>
+  </span>
 </header>
 
 <main id="main">
@@ -193,13 +242,23 @@ tr.out td.acts { opacity: 1; }
     <p class="group-tag">Group <b id="pickGroup"></b></p>
     <h1>Join as</h1>
     <div class="roles">
-      <button class="role" id="asHost"><strong>Host</strong><span>Set lives, see the total, start new rounds</span></button>
+      <button class="role" id="asHost"><strong>Host</strong><span>Set up the game, see the total, start new rounds</span></button>
       <button class="role" id="asGuest"><strong>Guest</strong><span>Pick 0 or 1</span></button>
     </div>
     <p class="err" id="pickMsg" role="alert"></p>
   </section>
 
-  <!-- Step 4 (host only): lives -->
+  <!-- Step 4 (host): mode -->
+  <section id="modeStep" class="stack" hidden>
+    <h1>Choose a mode</h1>
+    <div class="roles">
+      <button class="role" data-mode="offline"><strong>Offline</strong><span>Lives are deducted by hand</span></button>
+      <button class="role" data-mode="online"><strong>Online</strong><span>Everyone guesses the sum; wrong guesses lose a life</span></button>
+    </div>
+    <p class="err" id="modeMsg" role="alert"></p>
+  </section>
+
+  <!-- Step 5 (host): lives -->
   <section id="livesStep" class="stack" hidden>
     <h1>Set lives for participants</h1>
     <p class="hint">Everyone, including you, starts with this many lives.</p>
@@ -210,16 +269,38 @@ tr.out td.acts { opacity: 1; }
     <p class="err" id="livesMsg" role="alert"></p>
   </section>
 
-  <!-- Step 5: choose 0 or 1 -->
+  <!-- Step 6 (host, Online): tolerance -->
+  <section id="tolStep" class="stack" hidden>
+    <h1>Enter Tolerance</h1>
+    <p class="hint" id="tolHint"></p>
+    <form class="form-row" id="tolForm" novalidate>
+      <input class="big-input" id="tolInput" inputmode="numeric" autocomplete="off" aria-label="Tolerance" aria-describedby="tolMsg">
+      <button class="btn primary" type="submit">Confirm</button>
+    </form>
+    <p class="err" id="tolMsg" role="alert"></p>
+  </section>
+
+  <!-- Step 7: choose 0 or 1 -->
   <section id="vote" class="stack" hidden>
     <h1>Please Choose</h1>
-    <div class="choices waiting" id="choices">
-      <button class="opt" data-v="0" aria-pressed="false" disabled>0</button>
-      <button class="opt" data-v="1" aria-pressed="false" disabled>1</button>
+    <div class="choice-area" id="choiceArea">
+      <div class="choices waiting" id="choices">
+        <button class="opt" data-v="0" aria-pressed="false" disabled>0</button>
+        <button class="opt" data-v="1" aria-pressed="false" disabled>1</button>
+      </div>
+      <div class="cover" id="cover" hidden>Your choice is hidden</div>
     </div>
-    <div class="cover" id="cover" hidden>Your choice is hidden</div>
     <p id="status" aria-live="polite">Connecting…</p>
     <button class="btn small toggle" id="hideBtn" aria-pressed="false" hidden>Hide</button>
+
+    <div class="guess" id="guessBox" hidden>
+      <div class="guess-field" id="guessField">
+        <input id="guessInput" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="Enter your guess" aria-label="Enter your guess" aria-describedby="guessMsg">
+        <button class="btn tiny" id="guessChange" type="button" hidden>Change</button>
+        <button class="btn tiny primary" id="guessConfirm" type="button">Confirm</button>
+      </div>
+      <p class="err" id="guessMsg" aria-live="polite"></p>
+    </div>
 
     <section id="host" class="card" hidden aria-label="Host controls">
       <div class="card-head"><h2>Host</h2><span id="count">0 responses</span></div>
@@ -239,7 +320,7 @@ tr.out td.acts { opacity: 1; }
       <div class="card-head"><h2>User / Lives</h2><span id="livesNote"></span></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th scope="col">User</th><th scope="col">Lives</th><th scope="col"><span class="sr" hidden>Actions</span></th></tr></thead>
+          <thead><tr><th scope="col">User</th><th scope="col">Lives</th><th scope="col"></th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
@@ -253,6 +334,26 @@ tr.out td.acts { opacity: 1; }
     <h2 id="deadTitle">You are out of lives!</h2>
     <p id="deadSub">Wait for the host to restore you.</p>
   </div>
+</div>
+
+<div class="overlay" id="kickedOverlay" role="alertdialog" aria-modal="true" aria-labelledby="kickedTitle" hidden>
+  <div class="dialog">
+    <h2 id="kickedTitle">You have been removed from this group.</h2>
+    <p style="margin-bottom:1.2rem">The host removed you from the game.</p>
+    <button class="btn primary" id="backToStart">Back to start</button>
+  </div>
+</div>
+
+<div class="overlay" id="renameOverlay" role="dialog" aria-modal="true" aria-labelledby="renameTitle" hidden>
+  <form class="dialog form" id="renameForm" novalidate>
+    <h2 id="renameTitle">Change your name</h2>
+    <input class="big-input" id="renameInput" autocomplete="nickname" aria-label="New name" aria-describedby="renameMsg">
+    <p class="err" id="renameMsg" role="alert"></p>
+    <div class="dialog-actions">
+      <button class="btn small" type="button" id="renameCancel">Cancel</button>
+      <button class="btn small primary" type="submit">Save</button>
+    </div>
+  </form>
 </div>
 
 <div id="hostAlert" role="alert" hidden>
@@ -275,11 +376,14 @@ if (!cid || !/^[A-Za-z0-9-]{8,64}$/.test(cid)) { cid = newId(); store.set("pc_ci
 
 let group = null, me = null, isHostRole = false, hostToken = null;
 let round = null, myVote = null, sending = false, es = null, note = "", concealed = false;
-let roomLives = null, users = [], prevLives = new Map(), seeded = false, alerts = [];
-let armedPid = null, armTimerSelf = null;
+let roomLives = null, roomMode = "offline", roomTol = null, users = [];
+let prevLives = new Map(), seeded = false, alerts = [], kicked = false;
+let armedKey = null, armedTimer = null;
+let guess = { value: null, confirmed: false }, draftTimer = null;
+const setup = { mode: "offline", lives: null, tolerance: null };
 
 const validGroup = (g) => /^[0-9]{1,12}$/.test(g);
-const STEPS = ["groupStep", "nameStep", "pick", "livesStep", "vote"];
+const STEPS = ["groupStep", "nameStep", "pick", "modeStep", "livesStep", "tolStep", "vote"];
 function show(id) {
   STEPS.forEach((s) => ($(s).hidden = s !== id));
   $("topbar").hidden = id !== "vote";
@@ -297,6 +401,16 @@ async function fetchMe() {
   const r = await fetch(`/api/me?g=${group}&cid=${encodeURIComponent(cid)}`, { cache: "no-store" });
   return r.json();
 }
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function fieldError(input, msgEl, msg) {
+  msgEl.textContent = msg; input.classList.add("invalid"); input.focus();
+}
+function clearError(input, msgEl) { msgEl.textContent = ""; input.classList.remove("invalid"); }
 
 // ---------- step 1: group number ----------
 $("groupInput").addEventListener("input", (e) => {
@@ -313,7 +427,7 @@ function goToName(g) {
   group = g;
   $("nameGroup").textContent = g; $("pickGroup").textContent = g; $("voteGroup").textContent = g;
   const u = new URL(location.href); u.searchParams.set("g", g); history.replaceState(null, "", u);
-  $("nameMsg").textContent = ""; $("nameInput").classList.remove("invalid");
+  clearError($("nameInput"), $("nameMsg"));
   $("nameInput").value = store.get("pc_name_" + g) || store.get("pc_name") || "";
   show("nameStep");
   $("nameInput").focus();
@@ -324,7 +438,7 @@ $("changeGroup").addEventListener("click", () => {
   show("groupStep"); $("groupInput").focus();
 });
 
-// ---------- step 2: name ----------
+// ---------- names (step 2 and rename) ----------
 const NAME_RE = /^[A-Za-z\u3400-\u4dbf\u4e00-\u9fff]+( [A-Za-z\u3400-\u4dbf\u4e00-\u9fff]+)*$/;
 function checkName(raw) {
   const name = raw.trim().replace(/\s+/g, " ");
@@ -333,20 +447,45 @@ function checkName(raw) {
   if (!NAME_RE.test(name)) return { error: "Names can only use Chinese or English letters, with no symbols or punctuation." };
   return { name };
 }
-$("nameInput").addEventListener("input", () => { $("nameMsg").textContent = ""; $("nameInput").classList.remove("invalid"); });
-$("nameForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const fail = (msg) => { $("nameMsg").textContent = msg; $("nameInput").classList.add("invalid"); $("nameInput").focus(); };
-  const { name, error } = checkName($("nameInput").value);
-  if (error) return fail(error);
+async function saveName(input, msgEl) {
+  const { name, error } = checkName(input.value);
+  if (error) { fieldError(input, msgEl, error); return null; }
   try {
     const { ok, data } = await api("/api/join", { name });
-    if (!ok) return fail(data.error || "Couldn't save your name. Try again.");
-    me = data;
+    if (!ok) { fieldError(input, msgEl, data.error || "Couldn't save your name. Try again."); return null; }
     store.set("pc_name_" + group, data.name); store.set("pc_name", data.name);
-    $("pickMsg").textContent = "";
-    show("pick");
-  } catch (_) { fail("Can't reach the server. Check your connection."); }
+    return data;
+  } catch (_) { fieldError(input, msgEl, "Can't reach the server. Check your connection."); return null; }
+}
+$("nameInput").addEventListener("input", () => clearError($("nameInput"), $("nameMsg")));
+$("nameForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = await saveName($("nameInput"), $("nameMsg"));
+  if (!data) return;
+  me = data;
+  $("pickMsg").textContent = "";
+  show("pick");
+});
+
+// rename from the pencil next to my name
+function openRename() {
+  $("renameInput").value = me ? me.name : "";
+  clearError($("renameInput"), $("renameMsg"));
+  $("renameOverlay").hidden = false;
+  $("renameInput").focus(); $("renameInput").select();
+}
+function closeRename() { $("renameOverlay").hidden = true; $("renameBtn").focus(); }
+$("renameBtn").addEventListener("click", openRename);
+$("renameCancel").addEventListener("click", closeRename);
+$("renameOverlay").addEventListener("keydown", (e) => { if (e.key === "Escape") closeRename(); });
+$("renameInput").addEventListener("input", () => clearError($("renameInput"), $("renameMsg")));
+$("renameForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = await saveName($("renameInput"), $("renameMsg"));
+  if (!data) return;
+  me = { ...me, name: data.name };
+  renderMe(); renderPanel();
+  closeRename();
 });
 
 // ---------- step 3: role ----------
@@ -357,50 +496,88 @@ $("asHost").addEventListener("click", async () => {
     const { ok, data } = await api("/api/host/claim", { token: store.get("pc_host_" + group) });
     if (!ok) { $("pickMsg").textContent = data.error || "Host has existed!"; return; }
     hostToken = data.token; store.set("pc_host_" + group, hostToken);
-    $("livesInput").value = data.lives ? String(data.lives) : "";
-    $("livesMsg").textContent = ""; $("livesInput").classList.remove("invalid");
-    show("livesStep"); $("livesInput").focus();
+    setup.mode = data.mode || "offline"; setup.lives = data.lives; setup.tolerance = data.tolerance;
+    document.querySelectorAll("[data-mode]").forEach((b) => b.classList.toggle("current", !!data.lives && b.dataset.mode === setup.mode));
+    $("modeMsg").textContent = "";
+    show("modeStep");
   } catch (_) {
     $("pickMsg").textContent = "Can't reach the server. Check your connection.";
   }
 });
 
-// ---------- step 4: lives (host) ----------
-$("livesInput").addEventListener("input", () => { $("livesMsg").textContent = ""; $("livesInput").classList.remove("invalid"); });
-$("livesForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const fail = (msg) => { $("livesMsg").textContent = msg; $("livesInput").classList.add("invalid"); $("livesInput").focus(); };
-  const raw = $("livesInput").value.trim();
-  const n = Number(raw);
-  if (!/^[0-9]+$/.test(raw) || !Number.isInteger(n) || n < 1 || n > 10) return fail("Enter a whole number from 1 to 10.");
-  try {
-    const { ok, data } = await api("/api/lives/set", { lives: n });
-    if (!ok) return fail(data.error || "Couldn't save. Try again.");
-    enter(true);
-  } catch (_) { fail("Can't reach the server. Check your connection."); }
-});
+// ---------- host setup: mode, lives, tolerance ----------
+document.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => {
+  setup.mode = b.dataset.mode;
+  $("livesInput").value = setup.lives ? String(setup.lives) : "";
+  clearError($("livesInput"), $("livesMsg"));
+  show("livesStep"); $("livesInput").focus();
+}));
 
-// ---------- step 5: voting ----------
+function wholeNumber(raw) {
+  const t = raw.trim();
+  return /^[0-9]+$/.test(t) ? Number(t) : NaN;
+}
+$("livesInput").addEventListener("input", () => clearError($("livesInput"), $("livesMsg")));
+$("livesForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const n = wholeNumber($("livesInput").value);
+  if (!Number.isInteger(n) || n < 1 || n > 10) return fieldError($("livesInput"), $("livesMsg"), "Enter a whole number from 1 to 10.");
+  setup.lives = n;
+  if (setup.mode === "online") {
+    $("tolHint").textContent = `A guess within this distance of the sum is safe. Use a whole number from 0 to ${n - 1}.`;
+    $("tolInput").value = Number.isInteger(setup.tolerance) && setup.tolerance < n ? String(setup.tolerance) : "";
+    $("tolInput").placeholder = `0–${n - 1}`;
+    clearError($("tolInput"), $("tolMsg"));
+    show("tolStep"); $("tolInput").focus();
+  } else {
+    submitSetup();
+  }
+});
+$("tolInput").addEventListener("input", () => clearError($("tolInput"), $("tolMsg")));
+$("tolForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const t = wholeNumber($("tolInput").value);
+  if (!Number.isInteger(t) || t < 0 || t >= setup.lives) {
+    return fieldError($("tolInput"), $("tolMsg"), `Tolerance must be a whole number from 0 to ${setup.lives - 1}.`);
+  }
+  setup.tolerance = t;
+  submitSetup();
+});
+async function submitSetup() {
+  const target = setup.mode === "online" ? [$("tolInput"), $("tolMsg")] : [$("livesInput"), $("livesMsg")];
+  try {
+    const { ok, data } = await api("/api/setup", { mode: setup.mode, lives: setup.lives, tolerance: setup.tolerance });
+    if (!ok) {
+      if (data.field === "lives") { show("livesStep"); return fieldError($("livesInput"), $("livesMsg"), data.error); }
+      return fieldError(target[0], target[1], data.error || "Couldn't save. Try again.");
+    }
+    enter(true);
+  } catch (_) { fieldError(target[0], target[1], "Can't reach the server. Check your connection."); }
+}
+
+// ---------- choosing 0 or 1 ----------
 const opts = [...document.querySelectorAll(".opt")];
 const choicesEl = $("choices"), statusEl = $("status");
 const myLives = () => (me && typeof me.lives === "number" ? me.lives : null);
 const isOut = () => myLives() === 0;
+const locked = () => isOut() && !isHostRole;
 
 function renderChoices() {
   const ready = round !== null;
-  const locked = isOut() && !isHostRole;
   choicesEl.classList.toggle("waiting", !ready);
   opts.forEach((b) => {
     const v = Number(b.dataset.v);
     b.classList.toggle("chosen", myVote === v);
     b.classList.toggle("dim", myVote !== null && myVote !== v);
     b.setAttribute("aria-pressed", String(myVote === v));
-    b.disabled = !ready || sending || locked || myVote === v;
+    b.disabled = !ready || sending || locked() || myVote === v;
   });
   // Hide/Unhide is offered once a choice has been made; a new round shows the choices again.
   if (ready && myVote === null && concealed) setConcealed(false);
-  choicesEl.hidden = concealed;
+  $("choiceArea").classList.toggle("concealed", concealed);
   $("cover").hidden = !concealed;
+  if (concealed) opts.forEach((b) => b.setAttribute("tabindex", "-1"));
+  else opts.forEach((b) => b.removeAttribute("tabindex"));
   const hb = $("hideBtn");
   hb.hidden = !(ready && myVote !== null);
   hb.textContent = concealed ? "Unhide" : "Hide";
@@ -413,7 +590,7 @@ function renderChoices() {
 }
 
 async function choose(v) {
-  if (v === myVote || sending || round === null || (isOut() && !isHostRole)) return;
+  if (v === myVote || sending || round === null || locked()) return;
   const prev = myVote;
   sending = true; note = ""; myVote = v; renderChoices();
   try {
@@ -432,7 +609,78 @@ function setConcealed(on) {
   concealed = on;
   if (on) store.set("pc_hide_" + group, "1"); else store.del("pc_hide_" + group);
 }
-$("hideBtn").addEventListener("click", () => { setConcealed(!concealed); renderChoices(); $("hideBtn").focus(); });
+$("hideBtn").addEventListener("click", () => {
+  if (document.activeElement && document.activeElement.classList.contains("opt")) document.activeElement.blur();
+  setConcealed(!concealed); renderChoices();
+});
+
+// ---------- guess (Online) ----------
+const maxGuess = () => users.length;
+function guessError(raw) {
+  if (raw === "") return "";
+  const n = Number(raw);
+  if (!/^[0-9]+$/.test(raw) || n > maxGuess()) return `Enter a whole number from 0 to ${maxGuess()}.`;
+  return "";
+}
+function renderGuess() {
+  const box = $("guessBox");
+  box.hidden = roomMode !== "online" || round === null;
+  if (box.hidden) return;
+  const input = $("guessInput"), field = $("guessField");
+  input.disabled = guess.confirmed || locked();
+  field.classList.toggle("locked", guess.confirmed);
+  $("guessConfirm").hidden = guess.confirmed;
+  $("guessChange").hidden = !guess.confirmed;
+  $("guessConfirm").disabled = locked();
+  $("guessChange").disabled = locked();
+  if (guess.confirmed) {
+    field.classList.remove("invalid");
+    $("guessMsg").className = "err ok";
+    $("guessMsg").textContent = "Guess confirmed.";
+  } else if ($("guessMsg").classList.contains("ok")) {
+    $("guessMsg").className = "err"; $("guessMsg").textContent = "";
+  }
+}
+async function sendGuess(value, confirmed) {
+  const { ok, data } = await api("/api/guess", { value, confirmed });
+  if (!ok) throw new Error(data.error || "Couldn't save your guess. Try again.");
+  return data.guess;
+}
+$("guessInput").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
+  const raw = e.target.value, err = guessError(raw);
+  $("guessField").classList.toggle("invalid", !!err);
+  $("guessMsg").className = "err"; $("guessMsg").textContent = err;
+  // Keep the server up to date with what's typed, so CPT can use it even before Confirm.
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(async () => {
+    const value = raw !== "" && !err ? Number(raw) : null;
+    try { guess = await sendGuess(value, false); } catch (_) {}
+  }, 350);
+});
+$("guessConfirm").addEventListener("click", async () => {
+  clearTimeout(draftTimer);
+  const raw = $("guessInput").value.trim();
+  const err = raw === "" ? "Enter your guess first." : guessError(raw);
+  if (err) {
+    $("guessField").classList.add("invalid");
+    $("guessMsg").className = "err"; $("guessMsg").textContent = err;
+    $("guessInput").focus();
+    return;
+  }
+  $("guessConfirm").disabled = true;
+  try { guess = await sendGuess(Number(raw), true); }
+  catch (ex) { $("guessMsg").className = "err"; $("guessMsg").textContent = ex.message; }
+  renderGuess();
+});
+$("guessChange").addEventListener("click", async () => {
+  const raw = $("guessInput").value.trim();
+  guess = { value: raw === "" ? null : Number(raw), confirmed: false };
+  renderGuess();
+  $("guessInput").focus();
+  try { guess = await sendGuess(guess.value !== null && !guessError(raw) ? guess.value : null, false); } catch (_) {}
+});
+$("guessInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("guessConfirm").click(); });
 
 // ---------- me (top right) ----------
 function livesText(n) { return n === 1 ? "1 life" : n + " lives"; }
@@ -461,17 +709,21 @@ function byInitial(a, b) {
   if (ia !== ib) return ia < ib ? -1 : 1;
   return coll.compare(a.name, b.name);
 }
-function el(tag, cls, text) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text !== undefined) e.textContent = text;
-  return e;
+function actionButton(act, u, label, cls, disabled) {
+  const btn = el("button", "btn tiny " + cls, label);
+  btn.dataset.act = act; btn.dataset.pid = u.pid;
+  btn.disabled = disabled;
+  if (armedKey === act + ":" + u.pid) { btn.textContent = "Confirm?"; btn.classList.add("armed"); }
+  return btn;
 }
 function renderPanel() {
-  $("livesNote").textContent = roomLives ? `Start with ${livesText(roomLives)}` : "Waiting for the host to set lives";
+  let noteText = roomLives ? `Start with ${livesText(roomLives)}` : "Waiting for the host to set lives";
+  if (roomLives && roomMode === "online") noteText += `, tolerance ${roomTol ?? 0}`;
+  $("livesNote").textContent = noteText;
   const tbody = $("rows");
   tbody.textContent = "";
   $("noUsers").hidden = users.length > 0;
+  const online = roomMode === "online";
   for (const u of [...users].sort(byInitial)) {
     const self = me && u.pid === me.pid;
     const tr = el("tr");
@@ -492,21 +744,20 @@ function renderPanel() {
 
     const tdActs = el("td", "acts");
     const hasLives = typeof u.lives === "number";
-    if (isHostRole || self) {
-      const d = el("button", "btn tiny warn", "Deduct");
-      d.dataset.act = "deduct"; d.dataset.pid = u.pid;
-      d.disabled = !hasLives || u.lives === 0;
-      // Guests confirm before taking a life from themselves, since only the host can restore it.
-      if (!isHostRole && armedPid === u.pid) { d.textContent = "Confirm?"; d.classList.add("armed"); }
+    if (!online && (isHostRole || self)) {
+      const d = actionButton("deduct", u, "Deduct", "warn", !hasLives || u.lives === 0);
       d.setAttribute("aria-label", `Deduct a life from ${u.name}`);
       tdActs.append(d);
     }
     if (isHostRole) {
-      const r = el("button", "btn tiny", "Restore");
-      r.dataset.act = "restore"; r.dataset.pid = u.pid;
-      r.disabled = !hasLives || !roomLives || u.lives === roomLives;
+      const r = actionButton("restore", u, "Restore", "", !hasLives || !roomLives || u.lives === roomLives);
       r.setAttribute("aria-label", `Restore ${u.name} to ${roomLives || ""} lives`);
       tdActs.append(r);
+    }
+    if (online && isHostRole && !self) {
+      const x = actionButton("delete", u, "Delete", "warn", false);
+      x.setAttribute("aria-label", `Remove ${u.name} from the group`);
+      tdActs.append(x);
     }
     tr.append(tdName, tdLives, tdActs);
     tbody.append(tr);
@@ -515,28 +766,33 @@ function renderPanel() {
 $("rows").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]");
   if (!btn || btn.disabled) return;
-  const pid = btn.dataset.pid, act = btn.dataset.act;
-  if (act === "deduct" && !isHostRole && armedPid !== pid) {
-    armedPid = pid; renderPanel();
-    clearTimeout(armTimerSelf);
-    armTimerSelf = setTimeout(() => { armedPid = null; renderPanel(); }, 3000);
+  const pid = btn.dataset.pid, act = btn.dataset.act, key = act + ":" + pid;
+  // Removing a player, or a guest taking a life from themselves, needs a second tap to confirm.
+  const needsConfirm = act === "delete" || (act === "deduct" && !isHostRole);
+  if (needsConfirm && armedKey !== key) {
+    armedKey = key; renderPanel();
+    clearTimeout(armedTimer);
+    armedTimer = setTimeout(() => { armedKey = null; renderPanel(); }, 3000);
     return;
   }
-  armedPid = null; clearTimeout(armTimerSelf);
+  armedKey = null; clearTimeout(armedTimer);
   btn.disabled = true;
+  const path = { deduct: "/api/lives/deduct", restore: "/api/lives/restore", delete: "/api/kick" }[act];
   try {
-    const { ok, data } = await api(act === "deduct" ? "/api/lives/deduct" : "/api/lives/restore", { pid });
+    const { ok, data } = await api(path, { pid });
     if (!ok && isHostRole) $("hostMsg").textContent = data.error || "That didn't work.";
   } catch (_) { if (isHostRole) $("hostMsg").textContent = "Can't reach the server."; }
   renderPanel();
 });
 
-// ---------- out of lives ----------
-function renderOut() {
-  const out = isOut() && !isHostRole;
+// ---------- alerts and overlays ----------
+function renderOverlays() {
+  const out = locked() && !kicked;
   $("deadOverlay").hidden = !out;
-  $("main").inert = out;
-  $("topbar").inert = out;
+  $("kickedOverlay").hidden = !kicked;
+  const blocked = out || kicked;
+  $("main").inert = blocked;
+  $("topbar").inert = blocked;
 }
 function detectOuts(next) {
   for (const u of next) {
@@ -557,19 +813,34 @@ function pushAlert(text) {
   $("hostAlert").hidden = false;
 }
 $("alertClose").addEventListener("click", () => { alerts = []; $("hostAlert").hidden = true; });
+$("backToStart").addEventListener("click", () => {
+  const u = new URL(location.href); u.searchParams.delete("g"); location.href = u.toString();
+});
 
 // ---------- live state ----------
 function applyState(s) {
-  if (round !== null && s.round !== round) { myVote = null; note = ""; if (isHostRole) $("result").hidden = true; }
+  if (round !== null && s.round !== round) {
+    myVote = null; note = "";
+    guess = { value: null, confirmed: false };
+    $("guessInput").value = ""; $("guessMsg").textContent = ""; $("guessField").classList.remove("invalid");
+    if (isHostRole) $("result").hidden = true;
+  }
   round = s.round;
-  roomLives = s.lives;
+  roomLives = s.lives; roomMode = s.mode || "offline"; roomTol = s.tolerance;
   users = s.users || [];
   if (isHostRole) { setCount(s.count); detectOuts(users); }
   const mine = me && users.find((u) => u.pid === me.pid);
   if (mine) me = { ...me, name: mine.name, lives: mine.lives };
+  else if (me && !isHostRole) { kicked = true; if (es) es.close(); }
   renderAll();
 }
-function renderAll() { renderChoices(); renderMe(); renderPanel(); renderOut(); }
+function renderAll() { renderChoices(); renderGuess(); renderMe(); renderPanel(); renderOverlays(); }
+
+function onNotice(e) {
+  const n = JSON.parse(e.data);
+  // The host already sees the full list from CPT itself.
+  if (n.type === "missing" && !isHostRole && me && n.pids.includes(me.pid)) pushAlert("You haven't entered a guess!");
+}
 
 async function enter(asHost) {
   isHostRole = asHost;
@@ -583,11 +854,16 @@ async function enter(asHost) {
     const d = await fetchMe();
     if (d.me) me = d.me;
     myVote = d.vote;
+    if (d.guess) {
+      guess = d.guess;
+      $("guessInput").value = d.guess.value === null ? "" : String(d.guess.value);
+    }
     applyState(d);
   } catch (_) { statusEl.textContent = "Can't reach the server. Reload the page."; }
 
   es = new EventSource(`/events?g=${group}` + (asHost ? "&host=" + encodeURIComponent(hostToken) : ""));
   es.onmessage = (e) => applyState(JSON.parse(e.data));
+  es.addEventListener("notice", onNotice);
 }
 
 // ---------- host ----------
@@ -596,26 +872,39 @@ function notHost() { $("hostMsg").textContent = "You are no longer the host."; }
 
 $("cpt").addEventListener("click", async () => {
   const btn = $("cpt"); btn.disabled = true;
+  $("hostMsg").textContent = "";
   try {
     const { ok, data } = await api("/api/cpt");
     if (!ok) return notHost();
+    if (data.missing) {
+      $("result").hidden = true;
+      for (const m of data.missing) pushAlert(me && m.pid === me.pid ? "You haven't entered a guess!" : `${m.name} hasn't entered a guess!`);
+      return;
+    }
     const t = new Date(data.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     $("sum").textContent = String(data.sum);
-    $("detail").textContent = `Sum at ${t}. ${data.total} responses: ${data.zeros} chose 0, ${data.ones} chose 1.`;
+    let text = `Sum at ${t}. ${data.total} responses: ${data.zeros} chose 0, ${data.ones} chose 1.`;
+    if (data.mode === "online") {
+      text += ` Safe guesses: ${data.low} to ${data.high}.`;
+      if (data.already) text += " Lives were already checked this round.";
+      else if (data.lost.length) text += ` Lost a life: ${data.lost.join(", ")}.`;
+      else text += " Everyone was within range.";
+    }
+    $("detail").textContent = text;
     $("result").hidden = false;
   } catch (_) { $("hostMsg").textContent = "Can't reach the server."; }
   finally { btn.disabled = false; }
 });
 
-let armTimer = null;
+let resetTimer = null;
 $("reset").addEventListener("click", async () => {
   const btn = $("reset");
   if (!btn.classList.contains("armed")) {
     btn.classList.add("armed"); btn.textContent = "Click to clear all";
-    armTimer = setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Start Again"; }, 3500);
+    resetTimer = setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Start Again"; }, 3500);
     return;
   }
-  clearTimeout(armTimer); btn.classList.remove("armed");
+  clearTimeout(resetTimer); btn.classList.remove("armed");
   btn.textContent = "Clearing…"; btn.disabled = true;
   try {
     const { ok } = await api("/api/reset");
