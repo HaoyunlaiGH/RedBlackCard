@@ -18,7 +18,9 @@ const MAX_ROOMS = 10000;
 
 // rooms: group number -> {
 //   round, votes: {cid: 0|1}, hostToken, hostSeen, hostCid, lastActive,
-//   lives: null | 1..10, users: {cid: {pid, name, lives}}
+//   lives: null | 1..10, users: {cid: {pid, name, lives}},
+//   mode: "offline" | "online", tolerance: null | 0..lives-1,
+//   guesses: {cid: {value: int|null, confirmed: bool}}, judgedRound: null | round
 // }
 let rooms = {};
 try { rooms = JSON.parse(fs.readFileSync(DATA_FILE, "utf8")).rooms || {}; } catch (_) {}
@@ -48,12 +50,19 @@ function getRoom(g) {
   if (!validGroup(g)) return null;
   if (!rooms[g]) {
     if (Object.keys(rooms).length >= MAX_ROOMS) return null;
-    rooms[g] = { round: 1, votes: {}, hostToken: null, hostSeen: 0, hostCid: null, lives: null, users: {}, lastActive: Date.now() };
+    rooms[g] = {
+      round: 1, votes: {}, hostToken: null, hostSeen: 0, hostCid: null, lives: null, users: {},
+      mode: "offline", tolerance: null, guesses: {}, judgedRound: null, lastActive: Date.now(),
+    };
     save();
   }
   const r = rooms[g];
   if (!r.users) r.users = {};
   if (r.lives === undefined) r.lives = null;
+  if (!r.mode) r.mode = "offline";
+  if (r.tolerance === undefined) r.tolerance = null;
+  if (!r.guesses) r.guesses = {};
+  if (r.judgedRound === undefined) r.judgedRound = null;
   r.lastActive = Date.now();
   return r;
 }
@@ -76,6 +85,8 @@ function publicState(g, room) {
     count: Object.keys(room.votes).length,
     hostTaken: active,
     lives: room.lives,
+    mode: room.mode,
+    tolerance: room.tolerance,
     users: Object.values(room.users).map((u) => ({ pid: u.pid, name: u.name, lives: u.lives, host: u.pid === hostPid })),
   };
 }
@@ -85,6 +96,14 @@ function broadcast(g) {
   const msg = `data: ${JSON.stringify(publicState(g, room))}\n\n`;
   for (const c of roomClients(g)) c.res.write(msg);
 }
+// One-off messages (such as "you haven't entered a guess") go out as a separate "notice" event.
+function notify(g, obj) {
+  const msg = `event: notice\ndata: ${JSON.stringify(obj)}\n\n`;
+  for (const c of roomClients(g)) c.res.write(msg);
+}
+const playerCount = (room) => Object.keys(room.users).length;
+// A guess is valid if it is a whole number from 0 to the number of players in the group.
+const validGuess = (room, v) => Number.isInteger(v) && v >= 0 && v <= playerCount(room);
 function findByPid(room, pid) {
   for (const [cid, u] of Object.entries(room.users)) if (u.pid === pid) return { cid, user: u };
   return null;
@@ -155,7 +174,8 @@ const server = http.createServer(async (req, res) => {
     const ok = validCid(cid);
     const vote = ok && cid in room.votes ? room.votes[cid] : null;
     const u = ok ? room.users[cid] : null;
-    return send(res, 200, { ...publicState(g, room), vote, me: u ? { pid: u.pid, name: u.name, lives: u.lives } : null });
+    const guess = ok && room.guesses[cid] ? room.guesses[cid] : null;
+    return send(res, 200, { ...publicState(g, room), vote, guess, me: u ? { pid: u.pid, name: u.name, lives: u.lives } : null });
   }
 
   if (req.method !== "POST") return send(res, 404, { error: "Not found" });
@@ -187,7 +207,7 @@ const server = http.createServer(async (req, res) => {
       room.hostCid = cid;
       room.hostSeen = Date.now();
       save(); broadcast(g);
-      return send(res, 200, { token: room.hostToken, lives: room.lives });
+      return send(res, 200, { token: room.hostToken, lives: room.lives, mode: room.mode, tolerance: room.tolerance });
     }
     case "/api/host/release": {
       if (!asHost) return send(res, 403, { error: "Not the host" });
@@ -197,23 +217,31 @@ const server = http.createServer(async (req, res) => {
       save(); broadcast(g);
       return send(res, 200, { ok: true });
     }
-    case "/api/lives/set": {
+    case "/api/setup": {
+      // Host settings: mode, starting lives and (Online only) tolerance.
       if (!asHost) return send(res, 403, { error: "Not the host" });
-      const n = body.lives;
-      if (!Number.isInteger(n) || n < 1 || n > 10) return send(res, 400, { error: "Enter a whole number from 1 to 10." });
+      const { mode, lives: n, tolerance: t } = body;
+      if (mode !== "offline" && mode !== "online") return send(res, 400, { error: "Choose Online or Offline.", field: "mode" });
+      if (!Number.isInteger(n) || n < 1 || n > 10) return send(res, 400, { error: "Enter a whole number from 1 to 10.", field: "lives" });
+      if (mode === "online" && (!Number.isInteger(t) || t < 0 || t >= n)) {
+        return send(res, 400, { error: `Tolerance must be a whole number from 0 to ${n - 1}.`, field: "tolerance" });
+      }
+      room.mode = mode;
       room.lives = n;
+      if (mode === "online") room.tolerance = t;
       // Everyone without lives yet starts with the set number; nobody keeps more than the new number.
       for (const u of Object.values(room.users)) {
         if (u.lives === null || u.lives === undefined) u.lives = n;
         else if (u.lives > n) u.lives = n;
       }
       save(); broadcast(g);
-      return send(res, 200, { lives: n });
+      return send(res, 200, { mode, lives: n, tolerance: room.tolerance });
     }
     case "/api/lives/deduct": {
       const t = findByPid(room, body.pid);
       if (!t) return send(res, 404, { error: "User not found" });
       const self = validCid(cid) && t.cid === cid;
+      if (room.mode === "online") return send(res, 409, { error: "Deduct is off in Online mode." });
       if (!asHost && !self) return send(res, 403, { error: "You can only deduct your own life." });
       if (t.user.lives === null) return send(res, 409, { error: "Lives haven't been set yet." });
       if (t.user.lives > 0) { t.user.lives -= 1; save(); broadcast(g); }
@@ -227,6 +255,31 @@ const server = http.createServer(async (req, res) => {
       t.user.lives = room.lives;
       save(); broadcast(g);
       return send(res, 200, { lives: t.user.lives });
+    }
+    case "/api/kick": {
+      if (!asHost) return send(res, 403, { error: "Only the host can remove players." });
+      const t = findByPid(room, body.pid);
+      if (!t) return send(res, 404, { error: "User not found" });
+      if (t.cid === room.hostCid) return send(res, 400, { error: "You can't remove yourself." });
+      delete room.users[t.cid];
+      delete room.votes[t.cid];
+      delete room.guesses[t.cid];
+      save(); broadcast(g);
+      return send(res, 200, { ok: true });
+    }
+    case "/api/guess": {
+      if (room.mode !== "online") return send(res, 409, { error: "Guesses are only used in Online mode." });
+      const u = validCid(cid) ? room.users[cid] : null;
+      if (!u) return send(res, 400, { error: "Please enter your name first." });
+      if (u.lives === 0 && !asHost) return send(res, 403, { error: "You are out of lives!" });
+      const { value, confirmed } = body;
+      if (value !== null && !validGuess(room, value)) {
+        return send(res, 400, { error: `Enter a whole number from 0 to ${playerCount(room)}.` });
+      }
+      if (confirmed === true && value === null) return send(res, 400, { error: "Enter your guess first." });
+      room.guesses[cid] = { value, confirmed: confirmed === true };
+      save();
+      return send(res, 200, { guess: room.guesses[cid] });
     }
     case "/api/vote": {
       const { v, round } = body;
@@ -248,11 +301,36 @@ const server = http.createServer(async (req, res) => {
       if (!asHost) return send(res, 403, { error: "Not the host" });
       let zeros = 0, ones = 0;
       for (const v of Object.values(room.votes)) v === 1 ? ones++ : zeros++;
-      return send(res, 200, { sum: ones, zeros, ones, total: zeros + ones, at: Date.now() });
+      const result = { mode: room.mode, sum: ones, zeros, ones, total: zeros + ones, at: Date.now() };
+      if (room.mode !== "online") return send(res, 200, result);
+
+      // Online: every player still in the game needs a guess (confirmed or just typed in).
+      const alive = Object.entries(room.users).filter(([, u]) => typeof u.lives === "number" && u.lives > 0);
+      const missing = alive.filter(([c]) => !(room.guesses[c] && validGuess(room, room.guesses[c].value)));
+      if (missing.length) {
+        const pids = missing.map(([, u]) => u.pid);
+        notify(g, { type: "missing", pids });
+        return send(res, 200, { mode: "online", missing: missing.map(([, u]) => ({ pid: u.pid, name: u.name })) });
+      }
+      const tol = room.tolerance || 0;
+      const low = ones - tol, high = ones + tol;
+      const already = room.judgedRound === room.round;
+      const lost = [];
+      if (!already) {
+        // A guess below sum - tolerance or above sum + tolerance costs one life (equal is safe).
+        for (const [c, u] of alive) {
+          const v = room.guesses[c].value;
+          if (v < low || v > high) { u.lives -= 1; lost.push(u.name); }
+        }
+        room.judgedRound = room.round;
+        save(); broadcast(g);
+      }
+      return send(res, 200, { ...result, tolerance: tol, low: Math.max(0, low), high, already, lost });
     }
     case "/api/reset": {
       if (!asHost) return send(res, 403, { error: "Not the host" });
       room.votes = {};
+      room.guesses = {};
       room.round += 1;
       save(); broadcast(g);
       return send(res, 200, { round: room.round });
